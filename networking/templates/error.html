@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% set title = "Ошибка" %}
+{% set breadcrumbs = user is defined and user is not none %}
+{% block main %}
+<article>
+<h1>Что-то пошло не так</h1>
+<p>{{ error }}</p>
+</article>
+{% endblock %}

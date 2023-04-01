@@ -1,0 +1,46 @@
+{% set meta = user.docker_meta %}
+<aside>
+    {% if meta and meta.chapter == chapter and meta.state.name == 'READY' %}
+    <p>Задание готово. Скачайте VPN-конфигурацию:</p>
+    <p>
+        <a href="{{ url_for("networking:vpn:linux") }}">Для Linux</a><br/>
+        <a href="{{ url_for("networking:vpn:win") }}">Для Windows и Mac OS</a>
+    </p>
+
+    <p>
+        <a href="{{ url_for("networking:vpn:setup") }}">Как подключиться?</a>
+    </p>
+
+    <p>
+        Если что-то пошло не так, вы всегда можете перезапустить задание.
+    </p>
+
+    <form method="POST" action="{{ url_for('networking:' + chapter + ':launch') }}">
+        <p><button>Перезапустить</button></p>
+    </form>
+
+    <p>Не забудьте после этого переподключиться к VPN.</p>
+    {% elif meta and meta.state.name == 'IN_PROGRESS' %}
+    {% if meta.chapter is none %}
+    <p>
+        На сервере ведутся технические работы. Подождите.
+    </p>
+    {% else %}
+    <p>
+        Задание активируется или проверяется. Если вы видите этот статус больше 5 минут,
+        напишите в чат курса. Укажите код ошибки:
+    </p>
+    <pre><code>lock-{{ meta.chapter }}-{{ meta.user_id }}-{{ meta.port }}</code></pre>
+    {% endif %}
+    {% else %}
+    <p>Чтобы решить задание, его нужно активировать.</p>
+    
+    <form method="POST" action="{{ url_for('networking:' + chapter + ':launch') }}">
+        <p><button>Активировать</button></p>
+    </form>
+
+    {% if meta and meta.chapter is not none %}
+    <p>Активное задание будет деактивировано.</p>
+    {% endif %}
+    {% endif %}
+</aside>

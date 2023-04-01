@@ -1,0 +1,61 @@
+{% macro render_field(field) %}
+{% if field.widget.input_type == "submit" %}
+{% elif field.name.endswith("csrf_token") %}
+{% if field.errors %}
+<p class="csrf-error">
+    <strong>Решение не отправлено.</strong> Сессия истекла, пожалуйста, отправьте ваше решение заново.
+</p>
+{% endif %}
+{{ field() }}
+{% elif field.widget.input_type == "checkbox" %}
+<div>
+    <label>
+        {{ field() }}
+        {{ field.label.text|safe }}
+    </label>
+</div>
+{% else %}
+{% if field.label.text != "" %}
+{{ field.label() }}
+{% endif %}
+<div>
+    {{ field() }}
+    {% if field.errors %}
+    <span class="inline-error">{{ field.errors|join(", ") }}</span>
+    {% endif %}
+</div>
+{% endif %}
+{% endmacro %}
+
+{% macro render_form(form) %}
+<form method="POST" action="#{{ form._prefix.rstrip('-') }}">
+{% for field in form %}
+{{ render_field(field) }}
+{% endfor %}
+
+<p>
+{% if "submit" in form %}
+{{ form.submit() }}
+{% else %}
+<button>Отправить</button>
+{% endif %}
+{% if form.form_errors %}
+<span class="inline-error">{{ form.form_errors|join(", ") }}</span>
+{% endif %}
+</p>
+
+</form>
+{% endmacro %}
+
+{% macro checkpoint(result) %}
+{% set task = result.task %}
+<p id="{{ task.slug }}">
+    {% if result.is_solved %}✔️{% endif %}
+    <strong>Чекпоинт.</strong> {{ task.name }} —
+    {% if result.score %}
+    {{ result.score }} из {{ task.points }} баллов
+    {% else %}
+    {{ task.points }} балл{{ task.points|ending('', 'а', 'ов') }}
+    {% endif %}
+</p>
+{% endmacro %}

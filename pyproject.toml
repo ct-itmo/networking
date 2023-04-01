@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "networking"
+version = "2023.0b"
+description = "Assignments for networking course"
+authors = ["Nikita Sychev <root@nsychev.ru>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+quirck = {path = "quirck"}
+netaddr = "^0.8.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

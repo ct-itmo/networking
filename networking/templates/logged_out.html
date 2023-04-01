@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block main %}
+<article>
+<h1>Вы вышли</h1>
+<p><a href="{{ url_for('auth:start') }}">Войти обратно</a></p>
+</article>
+{% endblock %}
