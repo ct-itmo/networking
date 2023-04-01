@@ -1164,7 +1164,7 @@ category = "main"
 optional = false
 python-versions = "^3.10"
 files = []
-develop = false
+develop = true
 
 [package.dependencies]
 aioboto3 = "^10.2.0"
@@ -1634,4 +1634,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "f73402fce7889a35aaa026af600345e15c559aed6e2e75d340318210dd97b510"
+content-hash = "bf681a706728615bfc6d0a5be5f8fa70eeb7ac45b0c774e3c8151a59c0c96605"
