@@ -8,6 +8,9 @@ from starlette.requests import Request
 
 from networking.core.config import SOCKET_PATH
 
+Args = ParamSpec("Args")
+T = TypeVar("T")
+
 
 def get_address_size(ip: BaseIP) -> int:
     match ip.version:
@@ -41,10 +44,6 @@ def generate_address(rnd: Random, network: IPNetwork) -> IPAddress:
     return IPAddress(network.first | rnd.getrandbits(bit_count), version=network.version)
 
 
-Args = ParamSpec("Args")
-T = TypeVar("T")
-
-# TODO: support more than two results
 def generate_distinct(n: int, func: Callable[Args, T], *args: Args.args, **kwargs: Args.kwargs) -> tuple[T, ...]:
     while True:
         results = tuple(func(*args, **kwargs) for _ in range(n))

@@ -52,8 +52,8 @@
 <p id="{{ task.slug }}">
     {% if result.is_solved %}✔️{% endif %}
     <strong>Чекпоинт.</strong> {{ task.name }} —
-    {% if result.score %}
-    {{ result.score }} из {{ task.points }} баллов
+    {% if result.score and result.score != task.points %}
+    {{ result.score }} из {{ task.points }} балл{{ task.points|ending('а', 'ов', 'ов') }}
     {% else %}
     {{ task.points }} балл{{ task.points|ending('', 'а', 'ов') }}
     {% endif %}

@@ -1,20 +1,28 @@
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.middleware import Middleware
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
 from starlette.routing import Mount, Route
 
 from quirck.auth.middleware import AuthenticationMiddleware
+from quirck.auth.model import User
 from quirck.core import config
 from quirck.core.s3 import get_url
 from quirck.web.template import TemplateResponse
 
 from networking.core.middleware import LoadDockerMetaMiddleware
+from networking.core.model import Attempt
 
-from networking.chapters.ip import IPChapter
+from networking.chapters import chapters
 
 
 async def main_page(request: Request) -> Response:
-    return TemplateResponse(request, "pages/main.html")
+    return TemplateResponse(
+        request,
+        "pages/main.html",
+        {"chapters": chapters}
+    )
 
 
 # TODO: common route for pages
@@ -40,7 +48,6 @@ def get_mount():
         path="/",
         routes=[
             Route("/", main_page, name="main"),
-            IPChapter().get_mount(),
             Mount(
                 "/vpn",
                 routes=[
@@ -50,6 +57,9 @@ def get_mount():
                 ],
                 name="vpn"
             )
+        ] + [
+            chapter.get_mount()
+            for chapter in chapters
         ],
         middleware=[
             Middleware(AuthenticationMiddleware),

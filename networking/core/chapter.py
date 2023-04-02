@@ -1,9 +1,10 @@
 import functools
+import itertools
 import logging
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Generic, Protocol, Sequence, TypeVar
+from typing import Any, Iterator, Generic, Protocol, Sequence, TypeVar
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,24 +41,12 @@ class ChapherTaskResult:
     is_solved: bool = False
     score: Decimal | None = None
 
-    def append(self, attempt: Attempt) -> "ChapherTaskResult":
-        # TODO: account deadlines
-        if attempt.is_correct:
-            self.is_solved = True
-
-        if attempt.points is not None:
-            if self.score is not None:
-                self.score = max(self.score, attempt.points)
-            else:
-                self.score = Decimal(attempt.points)
-
-        return self
-
 
 class BaseChapter(Generic[Variant]):
     slug: str
     name: str
     deadline: datetime | None
+    hard_deadline: bool = False
     tasks: list[ChapterTask]
 
     routes: list[BaseRoute]
@@ -75,17 +64,42 @@ class BaseChapter(Generic[Variant]):
             name=self.slug
         )
 
-    def calculate_score(self, attempts: Sequence[Attempt]) -> list[ChapherTaskResult]:
-        chapter_attempts = list(attempt for attempt in attempts if attempt.chapter == self.slug)
+    def calculate_task_score(self, task: ChapterTask, attempts: Iterator[Attempt]) -> ChapherTaskResult:
+        is_solved = False
+        score: Decimal | None = None
 
-        # TODO: itertools.groupby
+        for attempt in attempts:
+            if attempt.is_correct:
+                is_solved = True
+            
+            attempt_score: Decimal | None = None
+            if attempt.points is not None:
+                attempt_score = attempt.points
+            elif attempt.is_correct:
+                attempt_score = task.points
+            
+            if attempt_score is not None:
+                if self.deadline is not None and attempt.submitted > self.deadline:
+                    if self.hard_deadline:
+                        continue
+                
+                    attempt_score *= Decimal('0.75')
+                
+                if score is None:
+                    score = attempt_score
+                else:
+                    score = max(score, attempt_score)
+
+        return ChapherTaskResult(task, is_solved, score)
+
+    def calculate_score(self, attempts: Sequence[Attempt]) -> list[ChapherTaskResult]:
+        tasks = {task.slug: task for task in self.tasks}
+        task_slugs = list(tasks.keys())
+        chapter_attempts = sorted((attempt for attempt in attempts if attempt.chapter == self.slug), key=lambda attempt: task_slugs.index(attempt.task))
+
         return [
-            functools.reduce(
-                lambda result, attempt: result.append(attempt),
-                (attempt for attempt in chapter_attempts if attempt.task == task.slug),
-                ChapherTaskResult(task)
-            )
-            for task in self.tasks
+            self.calculate_task_score(tasks[slug], task_attempts)
+            for slug, task_attempts in itertools.groupby(chapter_attempts, key=lambda attempt: attempt.task)
         ]
 
     async def get_variant(self, request: Request) -> Variant:
