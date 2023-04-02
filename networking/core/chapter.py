@@ -93,13 +93,12 @@ class BaseChapter(Generic[Variant]):
         return ChapherTaskResult(task, is_solved, score)
 
     def calculate_score(self, attempts: Sequence[Attempt]) -> list[ChapherTaskResult]:
-        tasks = {task.slug: task for task in self.tasks}
-        task_slugs = list(tasks.keys())
-        chapter_attempts = sorted((attempt for attempt in attempts if attempt.chapter == self.slug), key=lambda attempt: task_slugs.index(attempt.task))
+        chapter_attempts = sorted((attempt for attempt in attempts if attempt.chapter == self.slug), key=lambda attempt: attempt.task)
+        grouped_attempts = dict(itertools.groupby(chapter_attempts, key=lambda attempt: attempt.task))
 
         return [
-            self.calculate_task_score(tasks[slug], task_attempts)
-            for slug, task_attempts in itertools.groupby(chapter_attempts, key=lambda attempt: attempt.task)
+            self.calculate_task_score(task, grouped_attempts.get(task.slug, iter(())))
+            for task in self.tasks
         ]
 
     async def get_variant(self, request: Request) -> Variant:
@@ -146,6 +145,7 @@ class BaseChapter(Generic[Variant]):
                 session.add(report)
 
                 return RedirectResponse(f"{request.url_for(f'networking:{self.slug}:page')}#report", status_code=303)
+
 
         context.update(
             report=report_form,

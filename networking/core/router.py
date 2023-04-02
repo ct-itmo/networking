@@ -1,18 +1,14 @@
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.middleware import Middleware
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
 from starlette.routing import Mount, Route
 
 from quirck.auth.middleware import AuthenticationMiddleware
-from quirck.auth.model import User
 from quirck.core import config
 from quirck.core.s3 import get_url
 from quirck.web.template import TemplateResponse
 
 from networking.core.middleware import LoadDockerMetaMiddleware
-from networking.core.model import Attempt
 
 from networking.chapters import chapters
 
