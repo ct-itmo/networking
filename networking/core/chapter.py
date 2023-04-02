@@ -64,7 +64,7 @@ class BaseChapter(Generic[Variant]):
             name=self.slug
         )
 
-    def calculate_task_score(self, task: ChapterTask, attempts: Iterator[Attempt]) -> ChapherTaskResult:
+    def calculate_task_score(self, task: ChapterTask, attempts: list[Attempt]) -> ChapherTaskResult:
         is_solved = False
         score: Decimal | None = None
 
@@ -94,10 +94,10 @@ class BaseChapter(Generic[Variant]):
 
     def calculate_score(self, attempts: Sequence[Attempt]) -> list[ChapherTaskResult]:
         chapter_attempts = sorted((attempt for attempt in attempts if attempt.chapter == self.slug), key=lambda attempt: attempt.task)
-        grouped_attempts = dict(itertools.groupby(chapter_attempts, key=lambda attempt: attempt.task))
+        grouped_attempts = {key: list(value) for key, value in itertools.groupby(chapter_attempts, key=lambda attempt: attempt.task)}
 
         return [
-            self.calculate_task_score(task, grouped_attempts.get(task.slug, iter(())))
+            self.calculate_task_score(task, grouped_attempts.get(task.slug, []))
             for task in self.tasks
         ]
 

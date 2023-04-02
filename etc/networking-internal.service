@@ -1,0 +1,16 @@
+[Unit]
+Description=Networking
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/user/networking
+ExecStart=/home/user/.local/bin/poetry run python -m networking.core.socket
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
