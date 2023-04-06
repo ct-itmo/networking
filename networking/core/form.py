@@ -7,4 +7,8 @@ class ReportForm(QuirckForm):
     report = AceEditorField(label="", validators=[DataRequired()])
 
 
-__all__ = ["ReportForm"]
+class ClearProgressForm(QuirckForm):
+    pass
+
+
+__all__ = ["ReportForm", "ClearProgressForm"]

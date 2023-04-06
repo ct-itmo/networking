@@ -1,10 +1,9 @@
-import functools
 import itertools
 import logging
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Iterator, Generic, Protocol, Sequence, TypeVar
+from typing import Any, Generic, Protocol, Sequence, TypeVar
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +19,7 @@ from quirck.box.exception import DockerConflict
 from quirck.box.meta import Deployment
 from quirck.web.template import TemplateResponse
 
-from networking.core.form import ReportForm
+from networking.core.form import ClearProgressForm, ReportForm
 from networking.core.model import Attempt, Report
 from networking.core.util import scope_cached
 
@@ -154,22 +153,26 @@ class BaseChapter(Generic[Variant]):
             tasks={
                 result.task.slug: result
                 for result in self.calculate_score(attempts)
-            }
+            },
+            clear_progress=ClearProgressForm(request, prefix="clear-progress")
         )
 
         return TemplateResponse(request, f"chapters/{self.slug}.html", context)
 
     async def clear_progress(self, request: Request) -> Response:
-        # TODO: csrf protection
+        form = await ClearProgressForm.from_formdata(request, prefix="clear-progress")
 
-        session: AsyncSession = request.scope["db"]
+        if await form.validate_on_submit():
+            user: User = request.scope["user"]
+            session: AsyncSession = request.scope["db"]
 
-        await session.execute(
-            update(Attempt)
-                .where(Attempt.is_correct == True)
-                .where(Attempt.chapter == self.slug)
-                .values(is_correct=False)
-        )
+            await session.execute(
+                update(Attempt)
+                    .where(Attempt.is_correct == True)
+                    .where(Attempt.chapter == self.slug)
+                    .where(Attempt.user_id == user.id)
+                    .values(is_correct=False)
+            )
 
         return RedirectResponse(request.url_for(f"networking:{self.slug}:page"), status_code=303)
 
