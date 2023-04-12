@@ -49,13 +49,7 @@ class IPVariant:
 
         self.deployment = Deployment(
             containers=[
-                ContainerMeta(
-                    name="vpn",
-                    image="ct-itmo/quirck-relay",
-                    networks={"internal": None},
-                    bridge=True,
-                    vpn=True
-                ),
+                ContainerMeta.make_vpn(100000, ["internal"]),
                 ContainerMeta(
                     name="ping4",
                     image="ct-itmo/labs-networking-ping",
