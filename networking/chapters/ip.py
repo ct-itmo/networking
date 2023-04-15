@@ -103,7 +103,7 @@ class IPVariant:
 class IPChapter(DockerMixin, FormMixin, BaseChapter[IPVariant]):
     slug = "ip"
     name = "Протокол IP"
-    deadline = datetime(2023, 4, 12, 21, 0, 0)
+    deadline = datetime(2023, 4, 26, 21, 0, 0)
     tasks = [
         ChapterTask("netcalc", "Локальные сети", Decimal(1)),
         ChapterTask("ping4", "Пинг!", Decimal(1)),
