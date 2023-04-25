@@ -41,7 +41,12 @@ def generate_address(rnd: Random, network: IPNetwork) -> IPAddress:
     if bit_count == 0:
         return network.ip
 
-    return IPAddress(network.first | rnd.getrandbits(bit_count), version=network.version)
+    entropy = rnd.getrandbits(bit_count)
+    if bit_count > 1:
+        while entropy == 0 or entropy == (1 << bit_count) - 1:
+            entropy = rnd.getrandbits(bit_count)
+
+    return IPAddress(network.first | entropy, version=network.version)
 
 
 def generate_distinct(n: int, func: Callable[Args, T], *args: Args.args, **kwargs: Args.kwargs) -> tuple[T, ...]:
