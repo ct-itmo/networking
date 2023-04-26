@@ -10,7 +10,7 @@ from quirck.web.template import TemplateResponse
 
 from networking.chapters import chapters
 from networking.core.middleware import LoadDockerMetaMiddleware
-from networking.core.chapter import calculate_total_result
+from networking.core.chapter import calculate_overall_result
 
 
 async def main_page(request: Request) -> Response:
@@ -21,7 +21,7 @@ async def main_page(request: Request) -> Response:
         scores[chapter] = chapter.calculate_score(attempt)
         chapters_results[chapter] = chapter.calculate_chapter_result(scores[chapter])
 
-    overall_result = calculate_total_result(chapters_results.values())
+    overall_result = calculate_overall_result(chapters_results.values())
     
     return TemplateResponse(
         request,
