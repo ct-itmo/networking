@@ -40,12 +40,22 @@ class ChapherTaskResult:
     is_solved: bool = False
     score: Decimal | None = None
 
+
 @dataclass
-class ChapterResult:
+class OverallResult:
     total_score: Decimal
     earned_score: Decimal
     total_tasks: Decimal
     solved_tasks: Decimal
+
+
+def calculate_total_result(chapters_results: Sequence[OverallResult]) -> OverallResult:
+    return OverallResult(
+        total_score=sum(chapter_result.total_score for chapter_result in chapters_results),
+        earned_score=sum(chapter_result.earned_score for chapter_result in chapters_results),
+        total_tasks=sum(chapter_result.total_tasks for chapter_result in chapters_results),
+        solved_tasks=sum(chapter_result.solved_tasks for chapter_result in chapters_results)
+    )
 
 
 class BaseChapter(Generic[Variant]):
@@ -123,10 +133,8 @@ class BaseChapter(Generic[Variant]):
 
         return attempts
     
-    def calculate_chapter_result(self, attempts: Sequence[Attempt]) -> ChapterResult:
-        scores = self.calculate_score(attempts)
-
-        return ChapterResult(
+    def calculate_chapter_result(self, scores: list[ChapherTaskResult]) -> OverallResult:
+        return OverallResult(
             total_score=sum(task.points for task in self.tasks),
             earned_score=sum(result.score or 0 for result in scores),
             total_tasks=len(self.tasks),
@@ -172,7 +180,7 @@ class BaseChapter(Generic[Variant]):
                 result.task.slug: result
                 for result in scores
             },
-            chapter_result=self.calculate_chapter_result(attempts),
+            chapter_result=self.calculate_chapter_result(scores),
             clear_progress=ClearProgressForm(request, prefix="clear-progress")
         )
 

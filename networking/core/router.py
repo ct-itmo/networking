@@ -8,9 +8,9 @@ from quirck.core import config
 from quirck.core.s3 import get_url
 from quirck.web.template import TemplateResponse
 
-from networking.core.middleware import LoadDockerMetaMiddleware
-
 from networking.chapters import chapters
+from networking.core.middleware import LoadDockerMetaMiddleware
+from networking.core.chapter import calculate_total_result
 
 
 async def main_page(request: Request) -> Response:
@@ -19,14 +19,18 @@ async def main_page(request: Request) -> Response:
     for chapter in chapters:
         attempt = await chapter.get_attempts(request)
         scores[chapter] = chapter.calculate_score(attempt)
-        chapters_results[chapter] = chapter.calculate_chapter_result(attempt)
+        chapters_results[chapter] = chapter.calculate_chapter_result(scores[chapter])
+
+    overall_result = calculate_total_result(chapters_results.values())
+    
     return TemplateResponse(
         request,
         "pages/main.html",
         {
             "chapters": chapters,
             "scores": scores,
-            "chapter_results": chapters_results
+            "chapter_results": chapters_results,
+            "overall_result": overall_result
         }
     )
 

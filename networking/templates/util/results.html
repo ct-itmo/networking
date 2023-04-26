@@ -1,4 +1,6 @@
 <table class="results">
+    {{ show_result(overall_result) }}
+
     {% for chapter in chapters %}
     <tr>
         <th colspan="3">{{ chapter.name }}</th>
@@ -14,14 +16,7 @@
             {% endif %}
         </td>
         <td>{{ task.name }}</td>
-        <td>
-            {% if task_result.is_solved %}
-            {{ task_result.score }} 
-            {% else %}
-            {{ 0 }}
-            {% endif %}
-            / {{ task.points }}
-        </td>
+        <td>{{ task_result.score or 0 }} / {{ task.points }}</td>
         {% endwith %}
     </tr>
     {% endfor %}
