@@ -122,6 +122,16 @@ class BaseChapter(Generic[Variant]):
         )).all()
 
         return attempts
+    
+    def calculate_chapter_result(self, attempts: Sequence[Attempt]) -> ChapterResult:
+        scores = self.calculate_score(attempts)
+
+        return ChapterResult(
+            total_score=sum(task.points for task in self.tasks),
+            earned_score=sum(result.score or 0 for result in scores),
+            total_tasks=len(self.tasks),
+            solved_tasks=sum(1 for result in scores if result.is_solved)
+        )
 
     async def chapter_page(self, request: Request, context: dict[str, Any] = {}) -> Response:
         session: AsyncSession = request.scope["db"]
@@ -162,12 +172,7 @@ class BaseChapter(Generic[Variant]):
                 result.task.slug: result
                 for result in scores
             },
-            chapter_result=ChapterResult(
-                total_score=sum(task.points for task in self.tasks),
-                earned_score=sum(result.score or 0 for result in scores),
-                total_tasks=len(self.tasks),
-                solved_tasks=sum(1 for result in scores if result.is_solved)
-            ),
+            chapter_result=self.calculate_chapter_result(attempts),
             clear_progress=ClearProgressForm(request, prefix="clear-progress")
         )
 

@@ -14,10 +14,20 @@ from networking.chapters import chapters
 
 
 async def main_page(request: Request) -> Response:
+    scores = {}
+    chapters_results = {}
+    for chapter in chapters:
+        attempt = await chapter.get_attempts(request)
+        scores[chapter] = chapter.calculate_score(attempt)
+        chapters_results[chapter] = chapter.calculate_chapter_result(attempt)
     return TemplateResponse(
         request,
         "pages/main.html",
-        {"chapters": chapters}
+        {
+            "chapters": chapters,
+            "scores": scores,
+            "chapter_results": chapters_results
+        }
     )
 
 
