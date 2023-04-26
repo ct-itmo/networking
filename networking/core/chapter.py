@@ -40,6 +40,13 @@ class ChapherTaskResult:
     is_solved: bool = False
     score: Decimal | None = None
 
+@dataclass
+class ChapterResult:
+    total_score: Decimal
+    earned_score: Decimal
+    total_tasks: Decimal
+    solved_tasks: Decimal
+
 
 class BaseChapter(Generic[Variant]):
     slug: str
@@ -154,6 +161,12 @@ class BaseChapter(Generic[Variant]):
                 result.task.slug: result
                 for result in self.calculate_score(attempts)
             },
+            chapter_result=ChapterResult(
+                total_score=sum(task.points for task in self.tasks),
+                earned_score=sum(result.score or 0 for result in self.calculate_score(attempts)),
+                total_tasks=len(self.tasks),
+                solved_tasks=sum(1 for result in self.calculate_score(attempts) if result.is_solved)
+            ),
             clear_progress=ClearProgressForm(request, prefix="clear-progress")
         )
 

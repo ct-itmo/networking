@@ -1,0 +1,10 @@
+<h3 id="summary">Итоги</h3>
+<p>
+    Вы прошли {{ chapter_result.solved_tasks }} из {{ chapter_result.total_tasks }} чекпоинтов. 
+    {% if chapter_result.earned_score == chapter_result.total_score %}
+    Все чекпоинты пройдены.
+    {% endif %}
+</p>
+<p>
+    Вы набрали {{ chapter_result.earned_score }} из {{ chapter_result.total_score }} баллов.
+</p>
