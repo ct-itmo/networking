@@ -120,6 +120,6 @@ table.results td:last-child {
     text-align: right;
 }
 
-table.results th.chapter-th {
+table.results th {
     background-color: #fafafa;
 }
