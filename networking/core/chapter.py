@@ -152,6 +152,7 @@ class BaseChapter(Generic[Variant]):
 
                 return RedirectResponse(f"{request.url_for(f'networking:{self.slug}:page')}#report", status_code=303)
 
+        scores = self.calculate_score(attempts)
 
         context.update(
             report=report_form,
@@ -159,13 +160,13 @@ class BaseChapter(Generic[Variant]):
             chapter=self.slug,
             tasks={
                 result.task.slug: result
-                for result in self.calculate_score(attempts)
+                for result in scores
             },
             chapter_result=ChapterResult(
                 total_score=sum(task.points for task in self.tasks),
-                earned_score=sum(result.score or 0 for result in self.calculate_score(attempts)),
+                earned_score=sum(result.score or 0 for result in scores),
                 total_tasks=len(self.tasks),
-                solved_tasks=sum(1 for result in self.calculate_score(attempts) if result.is_solved)
+                solved_tasks=sum(1 for result in scores if result.is_solved)
             ),
             clear_progress=ClearProgressForm(request, prefix="clear-progress")
         )
