@@ -10,12 +10,12 @@ from quirck.web.template import TemplateResponse
 
 from networking.chapters import chapters
 from networking.core.middleware import LoadDockerMetaMiddleware
-from networking.core.chapter import calculate_overall_result
+from networking.core.chapter import BaseChapter, ChapterTaskResult, OverallResult, calculate_overall_result
 
 
 async def main_page(request: Request) -> Response:
-    scores = {}
-    chapters_results = {}
+    scores: dict[BaseChapter, list[ChapterTaskResult]] = {}
+    chapters_results: dict[BaseChapter, OverallResult] = {}
     for chapter in chapters:
         attempt = await chapter.get_attempts(request)
         scores[chapter] = chapter.calculate_score(attempt)

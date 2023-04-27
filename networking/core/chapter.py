@@ -3,7 +3,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Generic, Protocol, Sequence, TypeVar
+from typing import Any, Generic, Protocol, Sequence, TypeVar, Iterable
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,7 +35,7 @@ class ChapterTask:
 
 
 @dataclass
-class ChapherTaskResult:
+class ChapterTaskResult:
     task: ChapterTask
     is_solved: bool = False
     score: Decimal | None = None
@@ -45,14 +45,14 @@ class ChapherTaskResult:
 class OverallResult:
     total_score: Decimal
     earned_score: Decimal
-    total_tasks: Decimal
-    solved_tasks: Decimal
+    total_tasks: int
+    solved_tasks: int
 
 
-def calculate_total_result(chapters_results: Sequence[OverallResult]) -> OverallResult:
+def calculate_overall_result(chapters_results: Iterable[OverallResult]) -> OverallResult:
     return OverallResult(
-        total_score=sum(chapter_result.total_score for chapter_result in chapters_results),
-        earned_score=sum(chapter_result.earned_score for chapter_result in chapters_results),
+        total_score=sum((chapter_result.total_score for chapter_result in chapters_results), Decimal(0)),
+        earned_score=sum((chapter_result.earned_score for chapter_result in chapters_results), Decimal(0)),
         total_tasks=sum(chapter_result.total_tasks for chapter_result in chapters_results),
         solved_tasks=sum(chapter_result.solved_tasks for chapter_result in chapters_results)
     )
@@ -80,7 +80,7 @@ class BaseChapter(Generic[Variant]):
             name=self.slug
         )
 
-    def calculate_task_score(self, task: ChapterTask, attempts: list[Attempt]) -> ChapherTaskResult:
+    def calculate_task_score(self, task: ChapterTask, attempts: list[Attempt]) -> ChapterTaskResult:
         is_solved = False
         score: Decimal | None = None
 
@@ -106,9 +106,9 @@ class BaseChapter(Generic[Variant]):
                 else:
                     score = max(score, attempt_score)
 
-        return ChapherTaskResult(task, is_solved, score)
+        return ChapterTaskResult(task, is_solved, score)
 
-    def calculate_score(self, attempts: Sequence[Attempt]) -> list[ChapherTaskResult]:
+    def calculate_score(self, attempts: Sequence[Attempt]) -> list[ChapterTaskResult]:
         chapter_attempts = sorted((attempt for attempt in attempts if attempt.chapter == self.slug), key=lambda attempt: attempt.task)
         grouped_attempts = {key: list(value) for key, value in itertools.groupby(chapter_attempts, key=lambda attempt: attempt.task)}
 
@@ -133,10 +133,10 @@ class BaseChapter(Generic[Variant]):
 
         return attempts
     
-    def calculate_chapter_result(self, scores: list[ChapherTaskResult]) -> OverallResult:
+    def calculate_chapter_result(self, scores: list[ChapterTaskResult]) -> OverallResult:
         return OverallResult(
-            total_score=sum(task.points for task in self.tasks),
-            earned_score=sum(result.score or 0 for result in scores),
+            total_score=sum((task.points for task in self.tasks), Decimal(0)),
+            earned_score=sum((result.score or Decimal(0) for result in scores), Decimal(0)),
             total_tasks=len(self.tasks),
             solved_tasks=sum(1 for result in scores if result.is_solved)
         )
@@ -287,4 +287,4 @@ class FormMixin(BaseChapter[FormTaskProtocol]):
         return await super().chapter_page(request, context)
 
 
-__all__ = ["BaseChapter", "DockerMixin", "FormMixin"]
+__all__ = ["BaseChapter", "DockerMixin", "FormMixin", "ChapterTaskResult", "OverallResult", "calculate_overall_result"]
