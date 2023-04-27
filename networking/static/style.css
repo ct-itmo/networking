@@ -100,3 +100,26 @@ input[type=submit], input[type=button], button {
     padding: 0.3em 1em;
     cursor: pointer;
 }
+
+table.results {
+    margin-top: 10px;
+}
+
+table.results,
+table.results td,
+table.results th {
+    border: none;
+}
+
+table.results td,
+table.results th {
+    padding: 5px 15px;
+}
+
+table.results td:last-child {
+    text-align: right;
+}
+
+table.results th {
+    background-color: #fafafa;
+}

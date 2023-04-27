@@ -170,6 +170,9 @@
     {{ render_form(forms.mtu) }}
     {% endif %}
 
+    <h3 id="summary">Итоги</h3>
+    {{ show_result(chapter_result) }}
+    
     {% include "util/report.html" %}
     </article>
 {% endblock %}
