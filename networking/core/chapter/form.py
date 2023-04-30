@@ -17,9 +17,6 @@ class FormTaskProtocol(Protocol):
 
 
 class FormMixin(BaseChapter[FormTaskProtocol]):
-    def __init__(self):
-        super().__init__()
-
     async def chapter_page(self, request: Request, context: dict[str, Any] = {}) -> Response:
         session: AsyncSession = request.scope["db"]
         user: User = request.scope["user"]

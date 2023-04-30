@@ -50,8 +50,25 @@ class Report(Base):
     user: Mapped[User] = relationship("User", back_populates="reports")
 
 
+class Log(Base):
+    __tablename__ = "log"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)    
+    created: Mapped[datetime] = mapped_column(DateTime, server_default=text("now()"), nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("user.id", onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False
+    )
+    chapter: Mapped[str] = mapped_column(String(32), nullable=False)
+    check: Mapped[str] = mapped_column(String(32), nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+
+    user: Mapped[User] = relationship("User", back_populates="logs")
+
 User.attempts = relationship("Attempt", back_populates="user")
 User.reports = relationship("Report", back_populates="user")
+User.logs = relationship("Log", back_populates="user")
 
 
 __all__ = ["Attempt"]
