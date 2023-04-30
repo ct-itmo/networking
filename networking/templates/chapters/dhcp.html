@@ -1,15 +1,21 @@
 {% extends "base.html" %}
-{% set title = "DHCP" %}
+{% set title = "DHCP-клиент" %}
 {% set chapter = "dhcp" %}
 {% set breadcrumbs = true %}
 {% set ace_modes = ["sh"] %}
 {% block main %}
     <article>
-    <h1>DHCP</h1>
+    <h1>DHCP-клиент</h1>
 
     {% include "util/vpn.html" %}
 
     <p>Дедлайн — <strong>24 мая</strong>, 23:59 МСК.</p>
+
+    <p>
+        <strong>Дисклеймер.</strong> В этом задании конфигурация вашей сети
+        может быть изменена неожиданным образом. Мы рекомендуем выполнять
+        задание в виртуальной машине.
+    </p>
 
     <p>Подключитесь к VPN. На этот раз в сети есть DHCP-сервер — он выдаст вашему компьютеру IP-адрес.</p>
 
@@ -102,5 +108,5 @@
     {{ show_result(chapter_result) }}
 
     {% include "util/report.html" %}
-
+    </article>
 {% endblock %}

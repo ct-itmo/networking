@@ -1,22 +1,16 @@
 import itertools
-import logging
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Generic, Protocol, Sequence, TypeVar, Iterable
+from typing import Any, Generic, Sequence, TypeVar, Iterable
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.background import BackgroundTask
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
 from starlette.routing import Mount, BaseRoute, Route
 
 from quirck.auth.model import User
-from quirck.core.form import BaseTaskForm
-from quirck.box.docker import launch, lock_meta
-from quirck.box.exception import DockerConflict
-from quirck.box.meta import Deployment
 from quirck.web.template import TemplateResponse
 
 from networking.core.form import ClearProgressForm, ReportForm
@@ -24,7 +18,6 @@ from networking.core.model import Attempt, Report
 from networking.core.util import scope_cached
 
 Variant = TypeVar("Variant")
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -204,87 +197,4 @@ class BaseChapter(Generic[Variant]):
         return RedirectResponse(request.url_for(f"networking:{self.slug}:page"), status_code=303)
 
 
-class DockerTaskProtocol(Protocol):
-    deployment: Deployment
-
-
-class DockerMixin(BaseChapter[DockerTaskProtocol]):
-    def __init__(self):
-        super().__init__()
-        self.routes += [
-            Route("/launch", self.launch, name="launch", methods=["POST"])
-        ]
-    
-    async def launch(self, request: Request) -> Response:
-        session: AsyncSession = request.scope["db"]
-        user: User = request.scope["user"]
-
-        variant = await self.get_variant(request)
-
-        try:
-            meta = await lock_meta(session, user.id, self.slug)
-            task = BackgroundTask(launch, session, meta, user.id, variant.deployment)
-        except DockerConflict:
-            task = None
-
-        return RedirectResponse(
-            request.url_for(f"networking:{self.slug}:page"), status_code=303,
-            background=task
-        )
-
-
-class FormTaskProtocol(Protocol):
-    form_classes: list[type[BaseTaskForm]]
-
-
-class FormMixin(BaseChapter[FormTaskProtocol]):
-    def __init__(self):
-        super().__init__()
-
-    async def chapter_page(self, request: Request, context: dict[str, Any] = {}) -> Response:
-        session: AsyncSession = request.scope["db"]
-        user: User = request.scope["user"]
-
-        variant = await self.get_variant(request)
-        attempts = await self.get_attempts(request)
-
-        forms = {}
-
-        for form_class in variant.form_classes:
-            name = form_class.__name__
-
-            last_attempt = next(iter(attempt for attempt in attempts if attempt.task == name), None)
-            form = await form_class.from_formdata(request, prefix=name, data=last_attempt and last_attempt.data)
-
-            if form.submit.data:
-                if await form.validate_on_submit():
-                    form_data = {
-                        key: value
-                        for key, value in form.data.items()
-                        if key not in ["submit", "csrf_token"]
-                    }
-
-                    is_correct = await form.check()
-
-                    attempt = Attempt(
-                        user_id=user.id,
-                        chapter=self.slug,
-                        task=name,
-                        data=form_data,
-                        is_correct=await form.check()
-                    )
-                    session.add(attempt)
-
-                    if is_correct:
-                        return RedirectResponse(f"{request.url_for(f'networking:{self.slug}:page')}#{name}", status_code=303)
-                    else:
-                        form.form_errors.append("Неправильный ответ")
-            
-            forms[name] = form
-
-        context["forms"] = forms
-
-        return await super().chapter_page(request, context)
-
-
-__all__ = ["BaseChapter", "DockerMixin", "FormMixin", "ChapterTaskResult", "OverallResult", "calculate_overall_result"]
+__all__ = ["BaseChapter", "ChapterTaskResult", "OverallResult", "calculate_overall_result"]
