@@ -15,14 +15,11 @@ async fn main() -> Result<(), Error> {
 
     info!("Started");
 
-    let bind_address = env::var_os("BIND").ok_or(std::io::Error::new(
-        std::io::ErrorKind::AddrNotAvailable,
-        "address BIND not provided"
-    ))?
-        .into_string()?;
+    let bind_address = env::var("BIND").unwrap();
+    let host = env::var("HOST").unwrap();
 
     let addr = bind_address.parse()?;
-    let button = std::sync::Arc::new(Button::new());
+    let button = std::sync::Arc::new(Button::new(&host));
 
     let make_svc = make_service_fn(move |_conn| {
         let button = button.clone();

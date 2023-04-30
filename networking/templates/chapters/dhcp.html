@@ -26,6 +26,30 @@
     {{ render_form(forms.net) }}
     {% endif %}
 
+    <p>
+        Кроме непосредственно IP-адреса, DHCP-сервера могут сообщать довольно много дополнительной информации с помощью <em>опций</em>.
+        Возможные опции перечислены в <a href="https://datatracker.ietf.org/doc/html/rfc2132">RFC2132</a>.
+    </p>
+    
+    <p>
+        Например, иногда в локальных сетях принято опускать доменное имя — вместо <code>my-cool-host.acme.com</code> писать просто
+        <code>my-cool-host</code>. Чтобы это работало, есть два варианта. Первый — прописать в локальном файле <code>hosts</code>
+        все такие имена. На Unix-like системах этот файл обычно находится по пути <code>/etc/hosts</code>, а на Windows — по пути
+        <code>C:\Windows\System32\Drivers\etc\hosts</code>. Конечно, поддерживать сотни таких записей на всех рабочих станциях не
+        особо удобно. Поэтому альтернативный вариант — использование опций <em>Domain Name</em> или <code>Search Domain</code>.
+        Если DHCP-сервер передаёт в одну из этих опций, например, <code>acme.com</code>, то для запросов вида <code>my-cool-host</code>
+        клиент будет спрашивать <code>my-cool-host.acme.com</code>.
+    </p>
+
+    <p>Наш роутер сконфигурирован на использование такого механизма. Узнайте, какое же доменное имя сети он предлагает.</p>
+
+    {{ checkpoint(tasks.domain) }}
+
+    {% if not tasks.domain.is_solved %}
+    {{ render_form(forms.domain) }}
+    {% endif %}
+
+
     <h3>Часть 2. IPv6</h3>
 
     <p>
@@ -58,8 +82,8 @@
     {{ checkpoint(tasks.ip6) }}
 
     <p>
-        В сети, которую вам выдал DHCPv6-сервер, есть DNS-сервер. Его адрес заканчивается на <code>::35</code>.
-        Этот сервер знает IP-адрес сайта <code>{{ variant.domain }}.localnetwork</code>. Узнайте и вы.
+        Наш DHCPv6-сервер сообщает вам не только ваш IP-адрес, но ещё и информацию о локальном DNS-сервере.
+        Этот сервер знает IP-адрес сайта <code>{{ variant.http_domain }}.localnetwork</code>. Узнайте и вы.
     </p>
 
     {{ checkpoint(tasks.dns) }}
@@ -69,7 +93,7 @@
     {% endif %}
 
     <p>
-        Зайдите на сайт <code>http://{{ variant.domain }}.localnetwork:9229</code> и нажмите на кнопку.
+        Зайдите на сайт <code>http://{{ variant.http_domain }}.localnetwork:9229</code> и нажмите на кнопку.
     </p>
 
     {{ checkpoint(tasks.web) }}

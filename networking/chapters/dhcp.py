@@ -15,12 +15,49 @@ from networking.core.chapter import BaseChapter, ChapterTask, DockerMixin, FormM
 from networking.core.config import SECRET_SEED
 
 
+# The following list is the part of “Moby” owned by Docker Inc. and licensed by Apache 2.0 License.
+# See license at https://www.apache.org/licenses/LICENSE-2.0.txt
+# See legal disclaimer at https://github.com/moby/moby/blob/master/NOTICE
+ADJECTIVES = [
+    "admiring", "adoring", "affectionate", "agitated", "amazing", "angry", "awesome", "beautiful", "blissful", "bold", "boring", "brave", "busy",
+    "charming", "clever", "compassionate", "competent", "condescending", "confident","cool","cranky","crazy","dazzling", "determined", "distracted","dreamy",
+    "eager", "ecstatic", "elastic", "elated", "elegant", "eloquent", "epic", "exciting", "fervent", "festive", "flamboyant", "focused", "friendly", "frosty", "funny",
+    "gallant", "gifted", "goofy", "gracious", "great", "happy", "hardcore", "heuristic", "hopeful", "hungry",
+    "infallible", "inspiring", "intelligent", "interesting", "jolly", "jovial",
+    "keen", "kind", "laughing", "loving", "lucid",
+    "magical", "modest", "musing", "mystifying", "naughty", "nervous", "nice", "nifty", "nostalgic",
+    "objective", "optimistic", "peaceful", "pedantic", "pensive", "practical", "priceless",
+    "quirky", "quizzical", "recursing", "relaxed", "reverent", "romantic",
+    "sad", "serene", "sharp", "silly", "sleepy", "stoic", "strange", "stupefied", "suspicious", "sweet", "tender", "thirsty", "trusting",
+    "unruffled", "upbeat", "vibrant", "vigilant", "vigorous",
+    "wizardly", "wonderful", "xenodochial",
+    "youthful", "zealous", "zen"
+]
+
+NOUNS = [
+    "affair", "agency", "airport", "analysis", "apple", "article", "assumption", "audience", "bird", "boyfriend",
+    "chapter", "cheek", "client", "collection", "dad", "data", "death", "device", "direction", "disease",
+    "effort", "exam", "excitement", "expression", "friendship",
+    "gene", "goal", "guidance", 
+    "inspector", "insurance",
+    "language", "law", "loss",
+    "manager", "medicine", "mud",
+    "owner", "patience", "property",
+    "recording", "relationship",
+    "sample", "statement", "thanks", "thought",
+    "union", "university",
+    "warning", "winner", "wood"
+]
+
+ZONES = ["com", "net", "biz", "xn--p1ai"]
+
+
 class DHCPVariant:
     deployment: Deployment
     form_classes: list[type[BaseTaskForm]]
 
     slaac_suffix: str
-    domain: str
+    http_domain: str
 
     def __init__(self, user_id: int):
         rnd = Random(f"{SECRET_SEED}-{user_id}")
@@ -38,7 +75,9 @@ class DHCPVariant:
         client_ip4 = util.generate_address(rnd, next(ip4_net.subnet(prefixlen=25)))
 
         self.slaac_suffix = str(ping_mac.ipv6(0))
-        self.domain = "".join(rnd.choice(string.ascii_lowercase + string.digits) for _ in range(24))
+        self.http_domain = "".join(rnd.choice(string.ascii_lowercase + string.digits) for _ in range(24))
+
+        random_domain = f"{rnd.choice(ADJECTIVES)}-{rnd.choice(NOUNS)}.{rnd.choice(ZONES)}"
 
         self.deployment = Deployment(
             containers=[
@@ -54,6 +93,7 @@ class DHCPVariant:
                         "DHCP4": str(client_ip4),
                         "DHCP6": str(util.generate_address(rnd, dhcp6_net)),
                         "DNS6": str(dns_ip),
+                        "DOMAIN": random_domain,
                         "SLAAC": str(slaac_net.network)
                     },
                     volumes=util.socket_volume()
@@ -64,7 +104,7 @@ class DHCPVariant:
                     networks={"internal": None},
                     environment={
                         "HOSTIP": str(dns_ip),
-                        "DOMAIN": self.domain,
+                        "DOMAIN": self.http_domain,
                         "AAAAIP": str(http_mac.ipv6(slaac_net.value or 0))
                     },
                     mem_limit=200 * 1024 * 1024,
@@ -87,7 +127,8 @@ class DHCPVariant:
                     image="ct-itmo/labs-networking-dhcp-http",
                     networks={"internal": str(http_mac)},
                     environment={
-                        "BIND": f"[{http_ip}]:9229"
+                        "BIND": f"[{http_ip}]:9229",
+                        "HOST": f"{self.http_domain}.localnetwork:9229"
                     },
                     volumes=util.socket_volume(),
                     ipv6_forwarding=False
@@ -100,7 +141,8 @@ class DHCPVariant:
 
         self.form_classes = [
             RegexpForm.make_task("net", answer=re.compile(f"^{client_ip4}/24$", re.I)),
-            RegexpForm.make_task("dns", answer=re.compile(f"^{http_ip}$", re.I))
+            RegexpForm.make_task("dns", answer=re.compile(f"^{http_ip}$", re.I)),
+            RegexpForm.make_task("domain", answer=re.compile(f"^{random_domain.replace('.', chr(92) + '.')}$", re.I))
         ]
 
 
@@ -111,6 +153,7 @@ class DHCPChapter(DockerMixin, FormMixin, BaseChapter[DHCPVariant]):
     tasks = [
         ChapterTask("ip4", "Получите IPv4-адрес", Decimal(1)),
         ChapterTask("net", "Адрес и маска сети", Decimal(1)),
+        ChapterTask("domain", "Домен сети", Decimal(2)),
         ChapterTask("slaac", "Получите SLAAC-адрес", Decimal(1)),
         ChapterTask("ip6", "Получите адрес по DHCPv6", Decimal(1)),
         ChapterTask("dns", "Адрес сайта", Decimal(1)),
