@@ -33,7 +33,9 @@ class IPVariant:
     ip6_client: IPAddress
     ip6_server: IPAddress
 
-    def __init__(self, rnd: Random):
+    def __init__(self, user_id: int):
+        rnd = Random(f"{SECRET_SEED}-{user_id}")
+
         self.ll_mac = util.generate_mac(rnd)
         
         ip4_network = util.generate_subnet(rnd, IPNetwork("10.0.0.0/8"), 24)
@@ -49,7 +51,7 @@ class IPVariant:
 
         self.deployment = Deployment(
             containers=[
-                ContainerMeta.make_vpn(100000, ["internal"]),
+                ContainerMeta.make_vpn(user_id, ["internal"]),
                 ContainerMeta(
                     name="ping4",
                     image="ct-itmo/labs-networking-ping",
@@ -117,9 +119,7 @@ class IPChapter(DockerMixin, FormMixin, BaseChapter[IPVariant]):
     @util.scope_cached("variant")
     async def get_variant(self, request: Request) -> IPVariant:
         user_id: int = request.scope["user"].id
-        rnd = Random(f"{SECRET_SEED}-{user_id}")
-
-        return IPVariant(rnd)
+        return IPVariant(user_id)
 
 
 __all__ = ["IPChapter"]

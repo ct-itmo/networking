@@ -12,19 +12,19 @@ use pnet::packet::ip::IpNextHeaderProtocols;
 use pnet::packet::ipv4::Ipv4Packet;
 use pnet::packet::ipv6::Ipv6Packet;
 use std::env;
-use std::net::{Ipv4Addr, Ipv6Addr};
+use std::net::{Ipv4Addr, Ipv6Addr, IpAddr};
 
 pub struct Worker {
-    interface: NetworkInterface,
+    interface_name: String,
     src: String,
     client: LabClient,
     ping_received: bool,
 }
 
 impl Worker {
-    pub fn new(interface: NetworkInterface) -> Worker {
+    pub fn new(interface_name: &String) -> Worker {
         Worker {
-            interface,
+            interface_name: interface_name.to_string(),
             src: env::var("STUDENT_IP").unwrap(),
             ping_received: false,
             client: LabClient::new(),
@@ -37,11 +37,13 @@ impl Worker {
             ..Default::default()
         };
 
-        let (_tx, mut rx) = match datalink::channel(&self.interface, config) {
+        let interface = self.get_interface()?;
+
+        let (_tx, mut rx) = match datalink::channel(&interface, config) {
             Ok(Ethernet(tx, rx)) => (tx, rx),
             Ok(_) => {
                 return Err(From::from(
-                    ErrorKind::Pnet(format!("Can't open a channel on <{}> interface", &self.interface.name))))
+                    ErrorKind::Pnet(format!("Can't open a channel on <{}> interface", &interface.name))))
             }
             Err(e) => {
                 info!("{}", e);
@@ -82,32 +84,34 @@ impl Worker {
             return Ok(())
         }
 
-        info!(
-            "Got ICMP packet, src = {}, dst = {}",
-            ip.get_source(),
-            ip.get_destination()
-        );
+        let icmp = match IcmpPacket::new(ip.payload()) {
+            Some(icmp) => icmp,
+            None => return Ok(())
+        };
 
-        if self.interface.ips.iter().find(|&net| net.ip() == ip.get_destination()).is_none() {
-            return Ok(())
+        if icmp.get_icmp_type() != IcmpTypes::EchoRequest {
+            return Ok(());
         }
 
-        let expected_src = self.src.parse::<Ipv4Addr>();
+        info!("Got ICMP echo request from {} to {}", ip.get_source(), ip.get_destination());
 
-        if self.src != "any" && (expected_src.is_err() || ip.get_source() != expected_src?) {
-            return Ok(())
+        if !self.is_incoming(IpAddr::V4(ip.get_destination()))? {
+            return Ok(());
         }
 
-        if let Some(icmp) = IcmpPacket::new(ip.payload()) {
-            match (icmp.get_icmp_type(), self.ping_received) {
-                (IcmpTypes::EchoRequest, false) => {
-                    info!("Found echo request, will ignore all following pings");
-                    self.ping_received = true;
-                    self.client.submit().await?;
-                }
-                _ => {}
+        if self.src != "any" {
+            let expected_src = self.src.parse::<Ipv4Addr>();
+            if expected_src.is_err() || ip.get_source() != expected_src? {
+                return Ok(());
             }
         }
+
+        if !self.ping_received {
+            info!("Valid request received, all following packets will be ignored");
+            self.ping_received = true;
+            self.client.submit().await?;
+        }
+
         Ok(())
     }
 
@@ -117,32 +121,59 @@ impl Worker {
             return Ok(())
         }
 
-        info!(
-            "Got ICMPv6 packet, src = {}, dst = {}",
-            ip.get_source(),
-            ip.get_destination()
-        );
+        let icmp = match Icmpv6Packet::new(ip.payload()) {
+            Some(icmp) => icmp,
+            None => return Ok(())
+        };
 
-        if self.interface.ips.iter().find(|&net| net.ip() == ip.get_destination()).is_none() {
-            return Ok(())
+        if icmp.get_icmpv6_type() != Icmpv6Types::EchoRequest {
+            return Ok(());
         }
 
-        let expected_src = self.src.parse::<Ipv6Addr>();
+        info!("Got ICMPv6 echo request from {} to {}", ip.get_source(), ip.get_destination());
 
-        if self.src != "any" && (expected_src.is_err() || ip.get_source() != expected_src?) {
-            return Ok(())
+        if !self.is_incoming(IpAddr::V6(ip.get_destination()))? {
+            return Ok(());
         }
 
-        if let Some(icmp) = Icmpv6Packet::new(ip.payload()) {
-            match (icmp.get_icmpv6_type(), self.ping_received) {
-                (Icmpv6Types::EchoRequest, false) => {
-                    info!("Found echo request, will ignore all following pings");
-                    self.ping_received = true;
-                    self.client.submit().await?;
-                }
-                _ => {}
+        if self.src != "any" {
+            let expected_src = self.src.parse::<Ipv6Addr>();
+            if expected_src.is_err() || ip.get_source() != expected_src? {
+                return Ok(());
             }
         }
+
+        if !self.ping_received {
+            info!("Valid request received, all following packets will be ignored");
+            self.ping_received = true;
+            self.client.submit().await?;
+        }
+
         Ok(())
+    }
+
+    fn is_incoming(&self, ip: IpAddr) -> Result<bool, Error> {
+        let interfaces = pnet::datalink::interfaces();
+        let interface = interfaces
+            .into_iter()
+            .find(|iface: &NetworkInterface| iface.name == self.interface_name)
+            .ok_or(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("interface {} not found", self.interface_name),
+            ))?;
+
+        Ok(interface.ips.iter().find(|&net| net.ip() == ip).is_some())
+    }
+
+    fn get_interface(&self) -> Result<NetworkInterface, Error> {
+        let interfaces = pnet::datalink::interfaces();
+        let interface = interfaces
+            .into_iter()
+            .find(|iface: &NetworkInterface| iface.name == self.interface_name)
+            .ok_or(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("interface {} not found", self.interface_name),
+            ))?;
+        Ok(interface)
     }
 }

@@ -1,0 +1,14 @@
+$ORIGIN $DOMAIN.localnetwork. ;
+$TTL 600 ;
+
+$DOMAIN.localnetwork. IN SOA ns.$DOMAIN.localnetwork. admin.$DOMAIN.localnetwork. (
+    1
+    3600
+    10
+    3600000
+    10
+)
+
+@ NS ns.$DOMAIN.localnetwork.
+@ AAAA $AAAAIP
+ns AAAA $HOSTIP

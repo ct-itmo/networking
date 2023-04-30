@@ -4,7 +4,6 @@ use async_std::task;
 use env_logger;
 use futures::try_join;
 use log::info;
-use pnet::datalink::NetworkInterface;
 
 use ping::worker::Worker;
 use ping::types::Error;
@@ -20,16 +19,7 @@ async fn main() -> Result<(), Error> {
 
     info!("Catching pings from {} on {}", student_ip, interface_name);
 
-    let interfaces = pnet::datalink::interfaces();
-    let interface = interfaces
-        .into_iter()
-        .find(|iface: &NetworkInterface| iface.name == interface_name)
-        .ok_or(std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            format!("interface {} not found", interface_name),
-        ))?;
-
-    let worker = Worker::new(interface);
+    let worker = Worker::new(&interface_name);
     let task = task::spawn(worker.run());
     try_join!(task)?;
 

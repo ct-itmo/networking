@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% set title = "DHCP" %}
+{% set chapter = "dhcp" %}
+{% set breadcrumbs = true %}
+{% set ace_modes = ["sh"] %}
+{% block main %}
+    <article>
+    <h1>DHCP</h1>
+
+    {% include "util/vpn.html" %}
+
+    <p>Дедлайн — <strong>24 мая</strong>, 23:59 МСК.</p>
+
+    <p>Подключитесь к VPN. На этот раз в сети есть DHCP-сервер — он выдаст вашему компьютеру IP-адрес.</p>
+
+    <h3>Часть 1. IPv4</h3>
+
+    <p>Начнём с простого — просто получите IP-адрес.</p>
+
+    {{ checkpoint(tasks.ip4) }}
+
+    {{ checkpoint(tasks.net) }}
+
+    {% if not tasks.net.is_solved %}
+    <p>Какие адрес и подсеть вы получили? Укажите ответ в формате <code>1.2.3.4/12</code>.</p>
+    {{ render_form(forms.net) }}
+    {% endif %}
+
+    <h3>Часть 2. IPv6</h3>
+
+    <p>
+        Наш роутер анонсирует префиксы для <a href="https://ru.wikipedia.org/wiki/IPv6#%D0%90%D0%B2%D1%82%D0%BE%D0%BA%D0%BE%D0%BD%D1%84%D0%B8%D0%B3%D1%83%D1%80%D0%B0%D1%86%D0%B8%D1%8F_(Stateless_Address_Autoconfiguration_%E2%80%94_SLAAC)">автоконфигурации</a>
+        IPv6-адресов. Получите адрес с помощью SLAAC и отправьте пинг на адрес <em>внутри этой сети</em>,
+        заканчивающийся на <code>{{ variant.slaac_suffix }}</code>.
+    </p>
+
+    {{ checkpoint(tasks.slaac) }}
+
+    <details>
+    <summary>Подсказка</summary>
+    <p>Если вы когда-то игрались на вашем компьютере с сетями и всем таким, проверьте, не включен ли у вас
+        форвардинг IPv6-пакетов. На Linux это можно сделать командой
+        <code>sysctl net.ipv6.conf.<strong>tap0</strong>.forwarding</code>. Если ответ — единица, выключите
+        форвардинг и попробуйте переподключиться к сети.
+    </p>
+    </details>
+
+    <p>
+        В этой же сети находится ещё один сервер — DHCPv6. Получите адрес и от него.
+    </p>
+
+    <p>
+        <strong>Вопрос:</strong> почему баллы за получение адресов от DHCP и DHCPv6 ставятся автоматически, а в задании
+        на SLAAC нужно ещё что-то пинговать?
+        Ответ на него укажите в отчёте.
+    </p>
+
+    {{ checkpoint(tasks.ip6) }}
+
+    <p>
+        В сети, которую вам выдал DHCPv6-сервер, есть DNS-сервер. Его адрес заканчивается на <code>::35</code>.
+        Этот сервер знает IP-адрес сайта <code>{{ variant.domain }}.localnetwork</code>. Узнайте и вы.
+    </p>
+
+    {{ checkpoint(tasks.dns) }}
+
+    {% if not tasks.dns.is_solved %}
+    {{ render_form(forms.dns) }}
+    {% endif %}
+
+    <p>
+        Зайдите на сайт <code>http://{{ variant.domain }}.localnetwork:9229</code> и нажмите на кнопку.
+    </p>
+
+    {{ checkpoint(tasks.web) }}
+
+    <h3 id="summary">Итоги</h3>
+    {{ show_result(chapter_result) }}
+
+    {% include "util/report.html" %}
+
+{% endblock %}
