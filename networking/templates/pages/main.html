@@ -9,16 +9,29 @@
 
 <p><a href="{{ url_for("networking:vpn:setup") }}">Настройка VPN</a></p>
 
-<ol>
-    {% for chapter in chapters %}
-    <li><a href="{{ url_for('networking:' + chapter.slug + ':page') }}">{{ chapter.name }}</a></li>
-    {% endfor %}
-</ol>
+<p>Вы набрали {{ overall_score }} из {{ total_score }} балл{{ total_score|ending("а", "ов", "ов") }}.</p>
 
-<details>
-    <summary><b>Результаты</b></summary>
-    {% include "util/results.html" %}
-</details>
+<div class="chapter-table">
+    {% for chapter in chapters -%}
+    <input type="checkbox" id="{{ chapter.slug }}" />
+    <label for="{{ chapter.slug }}"><span>{{ loop.index }}. <a href="{{ url_for('networking:' + chapter.slug + ':page') }}">{{ chapter.chapter.name }}</a></span></label>
+    <div class="chapter-tasks">
+        {%- for result in chapter.results -%}
+        {%- with task = result.task %}
+        <div>
+            {%- if result.is_solved -%}
+            ✔️
+            {%- else -%}
+            ❌
+            {%- endif -%}
+        </div>
+        <div>{{ task.name }}</div>
+        <div>{{ result.score or 0 }} / {{ task.points }}</div>
+        {%- endwith -%}
+        {% endfor -%}
+    </div>
+    {% endfor -%}
+</div>
 
 <p>
     Выполняйте задания самостоятельно. Вы можете искать информацию в интернете, задавать вопросы своим однокурсникам и

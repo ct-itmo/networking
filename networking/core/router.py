@@ -1,36 +1,50 @@
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.middleware import Middleware
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
 from starlette.routing import Mount, Route
 
 from quirck.auth.middleware import AuthenticationMiddleware
+from quirck.auth.model import User
 from quirck.core import config
 from quirck.core.s3 import get_url
 from quirck.web.template import TemplateResponse
 
 from networking.chapters import chapters
+from networking.core.chapter.base import BaseChapter, ChapterTaskResult
 from networking.core.middleware import LoadDockerMetaMiddleware
-from networking.core.chapter.base import BaseChapter, ChapterTaskResult, OverallResult, calculate_overall_result
+from networking.core.model import Attempt
 
 
 async def main_page(request: Request) -> Response:
-    scores: dict[BaseChapter, list[ChapterTaskResult]] = {}
-    chapters_results: dict[BaseChapter, OverallResult] = {}
-    for chapter in chapters:
-        attempt = await chapter.get_attempts(request)
-        scores[chapter] = chapter.calculate_score(attempt)
-        chapters_results[chapter] = chapter.calculate_chapter_result(scores[chapter])
+    user: User = request.scope["user"]
+    session: AsyncSession = request.scope["db"]
 
-    overall_result = calculate_overall_result(chapters_results.values())
-    
+    attempts = (await session.scalars(
+        select(Attempt)
+            .where(Attempt.user_id == user.id)
+            .order_by(Attempt.chapter, Attempt.task, Attempt.submitted.desc())
+    )).all()
+
+    user_chapters = [
+        chapter.calculate_score([
+            attempt for attempt in attempts
+            if attempt.chapter == chapter.slug
+        ])
+        for chapter in chapters
+    ]
+
+    overall_score = sum(chapter.score for chapter in user_chapters)
+    total_score = sum(chapter.total_score for chapter in user_chapters)
+
     return TemplateResponse(
         request,
         "pages/main.html",
         {
-            "chapters": chapters,
-            "scores": scores,
-            "chapter_results": chapters_results,
-            "overall_result": overall_result
+            "chapters": user_chapters,
+            "overall_score": overall_score,
+            "total_score": total_score
         }
     )
 

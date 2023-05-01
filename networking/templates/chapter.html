@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% set title = chapter.chapter.name %}
+{% set breadcrumbs = true %}
+{% set ace_modes = ["sh"] %}
+{% block main %}
+    <article>
+    <h1>{{ title }}</h1>
+
+    <p class="meta">
+        <span>Чекпоинты: {{ chapter.solved_tasks }} из {{ chapter.total_tasks }}</span>
+        <span>Баллы: {{ chapter.score }} из {{ chapter.total_score }}</span>
+    </p>
+
+    {% include "util/vpn.html" %}
+
+    {% block chapter %}
+    {% endblock %}
+
+    {% include "util/report.html" %}
+    </article>
+{% endblock %}

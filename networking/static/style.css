@@ -101,25 +101,66 @@ input[type=submit], input[type=button], button {
     cursor: pointer;
 }
 
-table.results {
-    margin-top: 10px;
+.chapter-table {
+    display: grid;
+    grid-template-columns: repeat(3, max-content);
+    grid-gap: 5px 15px;
 }
 
-table.results,
-table.results td,
-table.results th {
-    border: none;
+.chapter-table > input[type=checkbox] {
+    position: absolute;
+    left: -9999px;
 }
 
-table.results td,
-table.results th {
-    padding: 5px 15px;
+.chapter-table > label {
+    display: grid;
+    grid-column: 1 / span 3;
+    grid-template-columns: subgrid;
+    cursor: pointer;
 }
 
-table.results td:last-child {
+.chapter-table > label > span {
+    grid-column: 1 / span 2;
+}
+
+.chapter-table > label::after {
     text-align: right;
 }
 
-table.results th {
-    background-color: #fafafa;
+.chapter-table > .chapter-tasks {
+    display: grid;
+    grid-column: 1 / span 3;
+    grid-template-columns: subgrid;
+    box-sizing: border-box;
+}
+
+.chapter-table > .chapter-tasks:not(:last-child) {
+    padding-bottom: 0.5em;
+}
+
+.chapter-table > input[type=checkbox]:checked + label::after {
+    content: '▲';
+}
+
+.chapter-table > input[type=checkbox]:not(:checked) + label::after {
+    content: '▼';
+}
+
+.chapter-table > input[type=checkbox]:not(:checked) + label + .chapter-tasks {
+    visibility: hidden;
+    height: 0;
+    padding: 0;
+}
+
+h1 + .meta {
+    margin: -0.7em 0 1.3em;
+}
+
+.meta {
+    color: #666;
+}
+
+.meta span {
+    white-space: nowrap;
+    padding-right: 1.5em;
 }

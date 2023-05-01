@@ -35,7 +35,7 @@
     {% else %}
     <p>Чтобы решить задание, его нужно активировать.</p>
     
-    <form method="POST" action="{{ url_for('networking:' + chapter + ':launch') }}">
+    <form method="POST" action="{{ url_for('networking:' + chapter.slug + ':launch') }}">
         <p><button>Активировать</button></p>
     </form>
 

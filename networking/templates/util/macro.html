@@ -59,16 +59,3 @@
     {% endif %}
 </p>
 {% endmacro %}
-
-{% macro show_result(result) %}
-<p>
-    {% if result.solved_tasks ==   result.total_tasks %}
-    Все чекпоинты пройдены.
-    {% else %}
-    Вы прошли {{ result.solved_tasks }} из {{ result.total_tasks }} чекпоинтов. 
-    {% endif %}
-</p>
-<p>
-    Вы набрали {{ result.earned_score }} из {{ result.total_score }} баллов.
-</p>
-{% endmacro %}

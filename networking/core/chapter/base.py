@@ -2,7 +2,7 @@ import itertools
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Generic, Sequence, TypeVar, Iterable
+from typing import Any, Generic, Sequence, TypeVar
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,21 +34,29 @@ class ChapterTaskResult:
     score: Decimal | None = None
 
 
-@dataclass
-class OverallResult:
-    total_score: Decimal
-    earned_score: Decimal
-    total_tasks: int
+class ChapterResult:
+    chapter: "BaseChapter"
+    results: list[ChapterTaskResult]
     solved_tasks: int
+    score: Decimal
 
+    @property
+    def total_tasks(self) -> int:
+        return len(self.chapter.tasks)
 
-def calculate_overall_result(chapters_results: Iterable[OverallResult]) -> OverallResult:
-    return OverallResult(
-        total_score=sum((chapter_result.total_score for chapter_result in chapters_results), Decimal(0)),
-        earned_score=sum((chapter_result.earned_score for chapter_result in chapters_results), Decimal(0)),
-        total_tasks=sum(chapter_result.total_tasks for chapter_result in chapters_results),
-        solved_tasks=sum(chapter_result.solved_tasks for chapter_result in chapters_results)
-    )
+    @property
+    def total_score(self) -> Decimal:
+        return sum((task.points for task in self.chapter.tasks), Decimal(0))
+
+    @property
+    def slug(self) -> str:
+        return self.chapter.slug
+
+    def __init__(self, chapter: "BaseChapter", results: list[ChapterTaskResult]):
+        self.chapter = chapter
+        self.results = results
+        self.solved_tasks = sum(1 for result in results if result.is_solved)
+        self.score = sum((result.score or Decimal(0) for result in results), Decimal(0))
 
 
 class BaseChapter(Generic[Variant]):
@@ -101,14 +109,16 @@ class BaseChapter(Generic[Variant]):
 
         return ChapterTaskResult(task, is_solved, score)
 
-    def calculate_score(self, attempts: Sequence[Attempt]) -> list[ChapterTaskResult]:
+    def calculate_score(self, attempts: Sequence[Attempt]) -> ChapterResult:
         chapter_attempts = sorted((attempt for attempt in attempts if attempt.chapter == self.slug), key=lambda attempt: attempt.task)
         grouped_attempts = {key: list(value) for key, value in itertools.groupby(chapter_attempts, key=lambda attempt: attempt.task)}
 
-        return [
+        scores = [
             self.calculate_task_score(task, grouped_attempts.get(task.slug, []))
             for task in self.tasks
         ]
+
+        return ChapterResult(self, scores)
 
     async def get_variant(self, request: Request) -> Variant:
         raise NotImplementedError()
@@ -125,14 +135,6 @@ class BaseChapter(Generic[Variant]):
         )).all()
 
         return attempts
-    
-    def calculate_chapter_result(self, scores: list[ChapterTaskResult]) -> OverallResult:
-        return OverallResult(
-            total_score=sum((task.points for task in self.tasks), Decimal(0)),
-            earned_score=sum((result.score or Decimal(0) for result in scores), Decimal(0)),
-            total_tasks=len(self.tasks),
-            solved_tasks=sum(1 for result in scores if result.is_solved)
-        )
 
     async def chapter_page(self, request: Request, context: dict[str, Any] = {}) -> Response:
         session: AsyncSession = request.scope["db"]
@@ -163,18 +165,18 @@ class BaseChapter(Generic[Variant]):
 
                 return RedirectResponse(f"{request.url_for(f'networking:{self.slug}:page')}#report", status_code=303)
 
-        scores = self.calculate_score(attempts)
+        chapter_result = self.calculate_score(attempts)
 
         context.update(
             report=report_form,
             variant=await self.get_variant(request),
-            chapter=self.slug,
             tasks={
                 result.task.slug: result
-                for result in scores
+                for result in chapter_result.results
             },
-            chapter_result=self.calculate_chapter_result(scores),
-            clear_progress=ClearProgressForm(request, prefix="clear-progress")
+            chapter=chapter_result,
+            clear_progress=ClearProgressForm(request, prefix="clear-progress"),
+            last_report_time=last_report and last_report.submitted
         )
 
         return TemplateResponse(request, f"chapters/{self.slug}.html", context)
@@ -197,4 +199,4 @@ class BaseChapter(Generic[Variant]):
         return RedirectResponse(request.url_for(f"networking:{self.slug}:page"), status_code=303)
 
 
-__all__ = ["BaseChapter", "ChapterTaskResult", "OverallResult", "calculate_overall_result"]
+__all__ = ["BaseChapter", "ChapterTaskResult"]

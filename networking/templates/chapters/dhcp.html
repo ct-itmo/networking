@@ -1,112 +1,98 @@
-{% extends "base.html" %}
-{% set title = "DHCP-клиент" %}
-{% set chapter = "dhcp" %}
-{% set breadcrumbs = true %}
+{% extends "chapter.html" %}
 {% set ace_modes = ["sh"] %}
-{% block main %}
-    <article>
-    <h1>DHCP-клиент</h1>
+{% block chapter %}
+<p>Дедлайн — <strong>24 мая</strong>, 23:59 МСК.</p>
 
-    {% include "util/vpn.html" %}
+<p>
+    <strong>Дисклеймер.</strong> В этом задании конфигурация вашей сети
+    может быть изменена неожиданным образом. Мы рекомендуем выполнять
+    задание в виртуальной машине.
+</p>
 
-    <p>Дедлайн — <strong>24 мая</strong>, 23:59 МСК.</p>
+<p>Подключитесь к VPN. На этот раз в сети есть DHCP-сервер — он выдаст вашему компьютеру IP-адрес.</p>
 
-    <p>
-        <strong>Дисклеймер.</strong> В этом задании конфигурация вашей сети
-        может быть изменена неожиданным образом. Мы рекомендуем выполнять
-        задание в виртуальной машине.
-    </p>
+<h3>Часть 1. IPv4</h3>
 
-    <p>Подключитесь к VPN. На этот раз в сети есть DHCP-сервер — он выдаст вашему компьютеру IP-адрес.</p>
+<p>Начнём с простого — просто получите IP-адрес.</p>
 
-    <h3>Часть 1. IPv4</h3>
+{{ checkpoint(tasks.ip4) }}
 
-    <p>Начнём с простого — просто получите IP-адрес.</p>
+{{ checkpoint(tasks.net) }}
 
-    {{ checkpoint(tasks.ip4) }}
+{% if not tasks.net.is_solved %}
+<p>Какие адрес и подсеть вы получили? Укажите ответ в формате <code>1.2.3.4/12</code>.</p>
+{{ render_form(forms.net) }}
+{% endif %}
 
-    {{ checkpoint(tasks.net) }}
+<p>
+    Кроме непосредственно IP-адреса, DHCP-сервера могут сообщать довольно много дополнительной информации с помощью <em>опций</em>.
+    Возможные опции перечислены в <a href="https://datatracker.ietf.org/doc/html/rfc2132">RFC2132</a>.
+</p>
 
-    {% if not tasks.net.is_solved %}
-    <p>Какие адрес и подсеть вы получили? Укажите ответ в формате <code>1.2.3.4/12</code>.</p>
-    {{ render_form(forms.net) }}
-    {% endif %}
+<p>
+    Например, иногда в локальных сетях принято опускать доменное имя — вместо <code>my-cool-host.acme.com</code> писать просто
+    <code>my-cool-host</code>. Чтобы это работало, есть два варианта. Первый — прописать в локальном файле <code>hosts</code>
+    все такие имена. На Unix-like системах этот файл обычно находится по пути <code>/etc/hosts</code>, а на Windows — по пути
+    <code>C:\Windows\System32\Drivers\etc\hosts</code>. Конечно, поддерживать сотни таких записей на всех рабочих станциях не
+    особо удобно. Поэтому альтернативный вариант — использование опций <em>Domain Name</em> или <code>Search Domain</code>.
+    Если DHCP-сервер передаёт в одну из этих опций, например, <code>acme.com</code>, то для запросов вида <code>my-cool-host</code>
+    клиент будет спрашивать <code>my-cool-host.acme.com</code>.
+</p>
 
-    <p>
-        Кроме непосредственно IP-адреса, DHCP-сервера могут сообщать довольно много дополнительной информации с помощью <em>опций</em>.
-        Возможные опции перечислены в <a href="https://datatracker.ietf.org/doc/html/rfc2132">RFC2132</a>.
-    </p>
-    
-    <p>
-        Например, иногда в локальных сетях принято опускать доменное имя — вместо <code>my-cool-host.acme.com</code> писать просто
-        <code>my-cool-host</code>. Чтобы это работало, есть два варианта. Первый — прописать в локальном файле <code>hosts</code>
-        все такие имена. На Unix-like системах этот файл обычно находится по пути <code>/etc/hosts</code>, а на Windows — по пути
-        <code>C:\Windows\System32\Drivers\etc\hosts</code>. Конечно, поддерживать сотни таких записей на всех рабочих станциях не
-        особо удобно. Поэтому альтернативный вариант — использование опций <em>Domain Name</em> или <code>Search Domain</code>.
-        Если DHCP-сервер передаёт в одну из этих опций, например, <code>acme.com</code>, то для запросов вида <code>my-cool-host</code>
-        клиент будет спрашивать <code>my-cool-host.acme.com</code>.
-    </p>
+<p>Наш роутер сконфигурирован на использование такого механизма. Узнайте, какое же доменное имя сети он предлагает.</p>
 
-    <p>Наш роутер сконфигурирован на использование такого механизма. Узнайте, какое же доменное имя сети он предлагает.</p>
+{{ checkpoint(tasks.domain) }}
 
-    {{ checkpoint(tasks.domain) }}
-
-    {% if not tasks.domain.is_solved %}
-    {{ render_form(forms.domain) }}
-    {% endif %}
+{% if not tasks.domain.is_solved %}
+{{ render_form(forms.domain) }}
+{% endif %}
 
 
-    <h3>Часть 2. IPv6</h3>
+<h3>Часть 2. IPv6</h3>
 
-    <p>
-        Наш роутер анонсирует префиксы для <a href="https://ru.wikipedia.org/wiki/IPv6#%D0%90%D0%B2%D1%82%D0%BE%D0%BA%D0%BE%D0%BD%D1%84%D0%B8%D0%B3%D1%83%D1%80%D0%B0%D1%86%D0%B8%D1%8F_(Stateless_Address_Autoconfiguration_%E2%80%94_SLAAC)">автоконфигурации</a>
-        IPv6-адресов. Получите адрес с помощью SLAAC и отправьте пинг на адрес <em>внутри этой сети</em>,
-        заканчивающийся на <code>{{ variant.slaac_suffix }}</code>.
-    </p>
+<p>
+    Наш роутер анонсирует префиксы для <a href="https://ru.wikipedia.org/wiki/IPv6#%D0%90%D0%B2%D1%82%D0%BE%D0%BA%D0%BE%D0%BD%D1%84%D0%B8%D0%B3%D1%83%D1%80%D0%B0%D1%86%D0%B8%D1%8F_(Stateless_Address_Autoconfiguration_%E2%80%94_SLAAC)">автоконфигурации</a>
+    IPv6-адресов. Получите адрес с помощью SLAAC и отправьте пинг на адрес <em>внутри этой сети</em>,
+    заканчивающийся на <code>{{ variant.slaac_suffix }}</code>.
+</p>
 
-    {{ checkpoint(tasks.slaac) }}
+{{ checkpoint(tasks.slaac) }}
 
-    <details>
-    <summary>Подсказка</summary>
-    <p>Если вы когда-то игрались на вашем компьютере с сетями и всем таким, проверьте, не включен ли у вас
-        форвардинг IPv6-пакетов. На Linux это можно сделать командой
-        <code>sysctl net.ipv6.conf.<strong>tap0</strong>.forwarding</code>. Если ответ — единица, выключите
-        форвардинг и попробуйте переподключиться к сети.
-    </p>
-    </details>
+<details>
+<summary>Подсказка</summary>
+<p>Если вы когда-то игрались на вашем компьютере с сетями и всем таким, проверьте, не включен ли у вас
+    форвардинг IPv6-пакетов. На Linux это можно сделать командой
+    <code>sysctl net.ipv6.conf.<strong>tap0</strong>.forwarding</code>. Если ответ — единица, выключите
+    форвардинг и попробуйте переподключиться к сети.
+</p>
+</details>
 
-    <p>
-        В этой же сети находится ещё один сервер — DHCPv6. Получите адрес и от него.
-    </p>
+<p>
+    В этой же сети находится ещё один сервер — DHCPv6. Получите адрес и от него.
+</p>
 
-    <p>
-        <strong>Вопрос:</strong> почему баллы за получение адресов от DHCP и DHCPv6 ставятся автоматически, а в задании
-        на SLAAC нужно ещё что-то пинговать?
-        Ответ на него укажите в отчёте.
-    </p>
+<p>
+    <strong>Вопрос:</strong> почему баллы за получение адресов от DHCP и DHCPv6 ставятся автоматически, а в задании
+    на SLAAC нужно ещё что-то пинговать?
+    Ответ на него укажите в отчёте.
+</p>
 
-    {{ checkpoint(tasks.ip6) }}
+{{ checkpoint(tasks.ip6) }}
 
-    <p>
-        Наш DHCPv6-сервер сообщает вам не только ваш IP-адрес, но ещё и информацию о локальном DNS-сервере.
-        Этот сервер знает IP-адрес сайта <code>{{ variant.http_domain }}.localnetwork</code>. Узнайте и вы.
-    </p>
+<p>
+    Наш DHCPv6-сервер сообщает вам не только ваш IP-адрес, но ещё и информацию о локальном DNS-сервере.
+    Этот сервер знает IP-адрес сайта <code>{{ variant.http_domain }}.localnetwork</code>. Узнайте и вы.
+</p>
 
-    {{ checkpoint(tasks.dns) }}
+{{ checkpoint(tasks.dns) }}
 
-    {% if not tasks.dns.is_solved %}
-    {{ render_form(forms.dns) }}
-    {% endif %}
+{% if not tasks.dns.is_solved %}
+{{ render_form(forms.dns) }}
+{% endif %}
 
-    <p>
-        Зайдите на сайт <code>http://{{ variant.http_domain }}.localnetwork:9229</code> и нажмите на кнопку.
-    </p>
+<p>
+    Зайдите на сайт <code>http://{{ variant.http_domain }}.localnetwork:9229</code> и нажмите на кнопку.
+</p>
 
-    {{ checkpoint(tasks.web) }}
-
-    <h3 id="summary">Итоги</h3>
-    {{ show_result(chapter_result) }}
-
-    {% include "util/report.html" %}
-    </article>
+{{ checkpoint(tasks.web) }}
 {% endblock %}

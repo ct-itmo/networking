@@ -3,7 +3,7 @@
 <aside>
     <p>Забыли, как вы что-то делали? Вы всегда можете сбросить ваш прогресс по этому заданию и пройти его заново.</p>
     <p><strong>Обратите внимание:</strong> это действие невозможно отменить.</p>
-    <p><form method="POST" action="{{ url_for('networking:' + chapter + ':clear') }}">
+    <p><form method="POST" action="{{ url_for('networking:' + chapter.slug + ':clear') }}">
         {{ clear_progress.csrf_token }}
         {{ clear_progress.submit(value="Сбросить") }}
     </form></p>
@@ -19,3 +19,11 @@
 </p>
 
 {{ render_form(report) }}
+
+<p class="meta">
+{% if last_report_time %}
+Время последней отправленной версии отчёта: {{ last_report_time }} UTC
+{% else %}
+Отчёт ещё не сохранён: не забудьте его отправить
+{% endif %}
+</p>
