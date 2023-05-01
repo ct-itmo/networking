@@ -115,7 +115,7 @@ input[type=submit], input[type=button], button {
 .chapter-table > label {
     display: grid;
     grid-column: 1 / span 3;
-    grid-template-columns: subgrid;
+    grid-template-columns: 1fr 0 max-content;
     cursor: pointer;
 }
 
@@ -130,7 +130,8 @@ input[type=submit], input[type=button], button {
 .chapter-table > .chapter-tasks {
     display: grid;
     grid-column: 1 / span 3;
-    grid-template-columns: subgrid;
+    grid-template-columns: max-content 1fr max-content;
+    grid-gap: 5px 15px;
     box-sizing: border-box;
 }
 
@@ -150,6 +151,16 @@ input[type=submit], input[type=button], button {
     visibility: hidden;
     height: 0;
     padding: 0;
+}
+
+@supports (grid-template-columns: subgrid) {
+    .chapter-table > label {
+        grid-template-columns: subgrid;
+    }
+
+    .chapter-table > .chapter-tasks {
+        grid-template-columns: subgrid;
+    }
 }
 
 h1 + .meta {
