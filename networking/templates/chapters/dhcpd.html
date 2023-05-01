@@ -30,7 +30,7 @@
 
 <h3>Проверка решения</h3>
 {% set meta = user.docker_meta %}
-{% if meta.state.name == 'READY' and meta.chapter == chapter %}
+{% if meta.state.name == 'READY' and meta.chapter == chapter.slug %}
     <p>
         Вы можете проверять обе части вашего решения сразу или по отдельности. Просто нажмите на кнопку —
         наш бот придёт в вашу сеть и попробует получить адреса. За каждый правильный адрес вы получите
@@ -40,10 +40,10 @@
         <input type="hidden" name="check" value="dhcpd" />
         <p><button>Проверить</button></p>
     </form>
-{% elif meta.chapter != chapter %}
+{% elif meta.chapter != chapter.slug %}
     <p>Чтобы запустить проверку, активируйте задание.</p>
 {% else %}
-    <p>Это задание уже активируется или проверяется. Пожалуйста, подождите.</p>
+    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
 {% endif %}
 
 {% if logs.dhcpd %}

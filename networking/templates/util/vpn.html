@@ -1,6 +1,6 @@
 {% set meta = user.docker_meta %}
 <aside>
-    {% if meta and meta.chapter == chapter and meta.state.name == 'READY' %}
+    {% if meta and meta.chapter == chapter.slug and meta.state.name == 'READY' %}
     <p>Задание готово. Скачайте VPN-конфигурацию:</p>
     <p>
         <a href="{{ url_for("networking:vpn:linux") }}">Для Linux</a><br/>
@@ -15,7 +15,7 @@
         Если что-то пошло не так, вы всегда можете перезапустить задание.
     </p>
 
-    <form method="POST" action="{{ url_for('networking:' + chapter + ':launch') }}">
+    <form method="POST" action="{{ url_for('networking:' + chapter.slug + ':launch') }}">
         <p><button>Перезапустить</button></p>
     </form>
 
@@ -25,12 +25,17 @@
     <p>
         На сервере ведутся технические работы. Подождите.
     </p>
-    {% else %}
+    {% elif meta.chapter == chapter.slug %}
     <p>
         Задание активируется или проверяется. Если вы видите этот статус больше 5 минут,
         напишите в чат курса. Укажите код ошибки:
     </p>
     <pre><code>lock-{{ meta.chapter }}-{{ meta.user_id }}-{{ meta.port }}</code></pre>
+    {% else %}
+    <p>
+        Сейчас активируется или проверяется другое задание. Дождитесь завершения этого
+        процесса, прежде чем активировать это задание.
+    </p>
     {% endif %}
     {% else %}
     <p>Чтобы решить задание, его нужно активировать.</p>
