@@ -92,7 +92,7 @@ async def scoreboard(request: Request) -> Response:
 
     users_with_chapters = [
         UserScore(user, [
-            chapter.calculate_score(grouped_attempts[user.id][chapter.slug])
+            chapter.calculate_score(grouped_attempts.get(user.id, {}).get(chapter.slug, []))
             for chapter in chapters
         ])
         for user in users
