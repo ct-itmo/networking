@@ -72,14 +72,11 @@ async def scoreboard(request: Request) -> Response:
     session: AsyncSession = request.scope["db"]
 
     users = (await session.scalars(
-        select(User)
-            .order_by(User.id)
+        select(User).order_by(User.id)
     )).all()
 
     attempts = (await session.scalars(
-        select(Attempt)
-            .where(Attempt.user_id == user.id)
-            .order_by(Attempt.user_id, Attempt.chapter, Attempt.task, Attempt.submitted.desc())
+        select(Attempt).order_by(Attempt.user_id, Attempt.chapter, Attempt.task, Attempt.submitted.desc())
     )).all()
 
     grouped_attempts = {
