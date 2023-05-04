@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% set breadcrumbs = true %}
+{% block main %}
+<article>
+<h1>Результаты курса</h1>
+
+<table class="scoreboard">
+    <thead>
+        <tr>
+            <th rowspan="2">ID</th>
+            <th rowspan="2">Студент</th>
+            <th rowspan="2">Баллы</th>
+            {%- for chapter in chapters %}
+            <th colspan="{{ chapter.tasks|length }}">{{ chapter.slug }}</th>
+            {%- endfor %}
+        </tr>
+        <tr>
+            {%- for chapter in chapters %}
+            {%- for task in chapter.tasks %}
+            <th>{{ task.slug }}</th>
+            {%- endfor %}
+            {%- endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {%- for user in users %}
+        <tr>
+            <td>{{ user.user.id }}</td>
+            <td>{{ user.user.name }}</td>
+            <td>{{ user.score }}</td>
+            {%- for chapter in user.chapters %}
+            {%- for result in chapter.results %}
+            <td>
+                {%- if result.score -%}
+                {%- if not result.is_solved -%}
+                {{ result.score}}*
+                {%- else -%}
+                {{ result.score }}
+                {%- endif -%}
+                {%- endif -%}
+            </td>
+            {%- endfor %}
+            {%- endfor %}
+        </tr>
+        {%- endfor %}
+    </tbody>
+</table>
+</article>
+{% endblock %}

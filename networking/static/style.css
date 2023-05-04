@@ -175,3 +175,7 @@ h1 + .meta {
     white-space: nowrap;
     padding-right: 1.5em;
 }
+
+.scoreboard td {
+    white-space: nowrap;
+}
