@@ -105,7 +105,7 @@ class DHCPDVariant:
                     networks={"internal": str(host_mac)},
                     ipv6_forwarding=False
                 )
-            ], 0, "/out/dhcpcd.log", self.check_dhcpd)
+            ], { 0: "/out/dhcpcd.log" }, self.check_dhcpd)
         }
 
 

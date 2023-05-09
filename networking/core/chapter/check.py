@@ -33,14 +33,19 @@ CHECK_TIMEOUT = ClientTimeout(
 )
 
 
+def check_default_log_joiner(container_logs: dict[int, str]) -> str:
+    return "\n".join(container_logs[i] for i in sorted(container_logs.keys()))
+
+
 @dataclass
 class Check:
     containers: list[ContainerMeta]
-    log_from: int
-    log_path: str
+    # map from container number to file_path
+    logs: dict[int, str]
     # Third argument is a variant itself
     # TODO: get rid of Any here
     check: Callable[[AsyncSession, DockerMeta, list[DockerContainer]], Awaitable[None]] | None = None
+    logs_joiner: Callable[[dict[int, str]], str] = check_default_log_joiner
 
 
 class CheckableTaskProtocol(Protocol):
@@ -88,28 +93,31 @@ class CheckableMixin(BaseChapter[CheckableTaskProtocol]):
                 # If got timeout, try to do something anyway
                 logger.warning("Timed out when waiting for check %s", check_name)
                 pass
-                
-            log_container = containers[check.log_from]
-            content = await log_container.get_archive(check.log_path)
 
-            log_content = ""
+            containers_logs: dict[int, str] = {}
+            for log_from, log_path in check.logs.items():
+                log_container = containers[log_from]
+                content = await log_container.get_archive(log_path)
 
-            for member in content.getmembers():
-                extracted = content.extractfile(member)
-                if extracted is None:
-                    continue
-                
-                try:
-                    log_content += extracted.read().decode()
-                    log_content += "\n\n"
-                except UnicodeDecodeError:
-                    log_content += f"File {member.name} cannot be decoded\n\n"
+                log_content = ""
+                for member in content.getmembers():
+                    extracted = content.extractfile(member)
+                    if extracted is None:
+                        continue
+
+                    try:
+                        log_content += extracted.read().decode()
+                        log_content += "\n\n"
+                    except UnicodeDecodeError:
+                        log_content += f"File {member.name} cannot be decoded\n\n"
+
+                containers_logs[log_from] = log_content.strip()
 
             log = Log(
                 user_id=meta.user_id,
                 chapter=self.slug,
                 check=check_name,
-                text=log_content.strip()
+                text=check.logs_joiner(containers_logs),
             )
 
             session.add(log)
