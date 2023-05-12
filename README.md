@@ -15,4 +15,7 @@
 ```
 SECRET_SEED=...
 SOCKET_PATH=/path/to/networking.sock
+
+DNS_REGEXP_IP=^SECRET$
+DNS_REGEXP_SERVERS=^SECRET$
 ```
