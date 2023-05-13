@@ -2,6 +2,7 @@
     "rust-analyzer.linkedProjects": [
         "./networking/images/ping/Cargo.toml",
         "./networking/images/dhcp-http/Cargo.toml",
-        "./networking/images/dhcp-dnsmasq/Cargo.toml"
+        "./networking/images/dhcp-dnsmasq/Cargo.toml",
+        "./networking/images/dns-bot/Cargo.toml"
     ]
 }

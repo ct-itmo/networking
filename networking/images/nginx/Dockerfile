@@ -1,4 +1,4 @@
-FROM nginx
+FROM nginx:bullseye
 
 RUN apt-get update -q && apt-get install -qy --no-install-recommends iproute2 && rm -rf /var/lib/apt/lists/*
 

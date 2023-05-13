@@ -1,4 +1,6 @@
-FROM rust:slim-buster as build
+FROM rust:1.69.0-slim-bullseye as build
+
+ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL sparse
 
 RUN USER=root cargo new --bin http
 WORKDIR /http

@@ -36,7 +36,7 @@ class DNSVariant:
     subdomain: str
     subip6: IPAddress
 
-    async def check_dns(self, session: AsyncSession, meta: DockerMeta, containers: list[DockerContainer]) -> None:
+    async def check_dns(self, _session: AsyncSession, _meta: DockerMeta, _containers: list[DockerContainer]) -> None:
         # Empty, all points are passed from the bot
         ...
 
@@ -90,7 +90,15 @@ class DNSVariant:
                     image="ct-itmo/labs-networking-dns-bot",
                     networks={"internal": None},
                     ipv6_forwarding=False,
-                    volumes=util.socket_volume()
+                    volumes=util.socket_volume(),
+                    environment={
+                        "DOMAIN": self.domain,
+                        "SUBDOMAIN": f"{self.subdomain}.{self.domain}",
+                        "IP4": str(self.ip4),
+                        "IP6": str(self.ip6),
+                        "SUBIP6": str(self.subip6),
+                        "BOX_IP": "10.52.1.2"
+                    }
                 )
             ], 0, "/out/dns.log", self.check_dns)
         }
@@ -104,9 +112,9 @@ class DNSChapter(CheckableMixin, DockerMixin, FormMixin, BaseChapter[DNSVariant]
         ChapterTask("ip", "IP-адрес", Decimal(1.5)),
         ChapterTask("servers", "Список серверов", Decimal(3)),
         ChapterTask("recursive", "Рекурсивный сервер", Decimal(3)),
-        ChapterTask("authoritative", "Авторитетный сервер", Decimal(3)),
+        ChapterTask("authoritative", "Авторитетный сервер", Decimal(1.5)),
         ChapterTask("mail", "Почта", Decimal(1.5)),
-        ChapterTask("subdomain", "Поддомен", Decimal(1.5)),
+        ChapterTask("subdomain", "Поддомен", Decimal(3)),
         ChapterTask("transfer", "Трансфер", Decimal(3))
     ]
 
