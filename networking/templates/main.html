@@ -5,6 +5,13 @@
 <article>
 <h1>Компьютерные сети, весна 2022/23</h1>
 
+{% if user.is_admin %}
+<p>
+    <a href="{{ url_for("networking:scoreboard") }}">Результаты курса</a><br/>
+    <a href="{{ url_for("auth:admin:impersonate") }}">Смена пользователя</a>
+</p>
+{% endif %}
+
 <h3>Домашние задания</h3>
 
 <p><a href="{{ url_for("networking:vpn:setup") }}">Настройка VPN</a></p>
