@@ -1,0 +1,284 @@
+{% extends "chapter.html" %}
+{% set ace_modes = ["sh"] %}
+{% block chapter %}
+{% set meta = user.docker_meta %}
+
+<p>Дедлайн — <strong>TBA</strong>, 23:59 МСК. После этого задания будут стоить на четверть дешевле.</p>
+
+<p>Для выполнения этого задания вам понадобится поддерживать два VPN подключения, эмулирующих подключение к двум независимым свичам.</p>
+
+
+
+<h3>Часть 1. Две сети</h3>
+
+<p>
+    Подключение выполняется через один и тот же VPN конфиг, однако при подключении можно будет задать название сети, которой вы хотите подключиться, через переменную окружения <code>UV_NETWORK</code>. Вам предстоит работать с двумя L2 сетями, которые называются <code>internalA</code> и <code>internalB</code>.
+</p>
+
+<p><code>{{ variant.ip4_a_network }}</code></p>
+<p><code>{{ variant.ip4_b_network }}</code></p>
+<p><code>{{ variant.ip4_a_client }}</code></p>
+<p><code>{{ variant.ip4_b_client }}</code></p>
+
+<details>
+<summary>Самостоятельная проверка</summary>
+<p>
+    Вы можете самостоятельно проверить корректность подключения вашего будущего fairwall сервера, при помощи еще одного устройста.
+</p>
+<p>
+    Подключите его при помощи vpn к сети <code>internalA</code> и установите ему ip <code>{{ variant.ip4_a_free }}/24</code>. Проверьте, что ping до <code>{{ variant.ip4_a_firewall }}</code> работает.
+</p>
+<p>
+    Затем смените ip на <code>{{ variant.ip4_b_free }}/24</code> и, если вы все правильно настроили, ping до <code>{{ variant.ip4_b_firewall }}</code> работать не будет.
+</p>
+</details>
+
+{{ checkpoint(tasks.setup) }}
+
+{% if not tasks.setup.is_solved %}
+{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
+    <p>
+        Чтобы еще раз убедиться, что все ваш сервер имеет правильные ip в соответствующих сетях, наш бот отправит вашему серверу несколько ICMP пакетов.
+    </p>
+    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
+        <input type="hidden" name="check" value="setup" />
+        <p><button>Проверить</button></p>
+    </form>
+{% elif meta is not none and meta.chapter != chapter.slug %}
+    <p>Чтобы запустить проверку, активируйте задание.</p>
+{% else %}
+    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
+{% endif %}
+{% endif %}
+{% if logs.setup %}
+<details>
+    <summary>Лог последней проверки в {{ logs.setup.created }} (UTC)</summary>
+    <pre><code>{{ logs.setup.text }}</code></pre>
+</details>
+{% endif %}
+
+<p>
+    А теперь давайте позволим устройствам из разых сетей общаться друг с другом.
+    Для этого включите forwarding на вашем firewall сервере.
+</p>
+<p><strong>Примечание:</strong> если раньше игрались с форвардингом проверьче, что у вас разрешен форфардинг ICMP, TCP и UDP пакетов между сетями <code>tap0</code> и <code>tap1</code>.</p>
+
+<p>Чтобы проверить, что форвардинг работает в обще стороны, два наших бота пошлют несколько пакетов из одной сети в другую.
+Если все хорошо, то вы закроете еще два чекпоинта.</p>
+
+{{ checkpoint(tasks.forward_a_to_b) }}
+
+{% if not tasks.forward_a_to_b.is_solved %}
+{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
+    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
+        <input type="hidden" name="check" value="forward_a_to_b" />
+        <p><button>Проверить</button></p>
+    </form>
+{% elif meta is not none and meta.chapter != chapter.slug %}
+    <p>Чтобы запустить проверку, активируйте задание.</p>
+{% else %}
+    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
+{% endif %}
+{% endif %}
+{% if logs.forward_a_to_b %}
+<details>
+    <summary>Лог последней проверки в {{ logs.forward_a_to_b.created }} (UTC)</summary>
+    <pre><code>{{ logs.forward_a_to_b.text }}</code></pre>
+</details>
+{% endif %}
+
+{{ checkpoint(tasks.forward_b_to_a) }}
+
+{% if not tasks.forward_b_to_a.is_solved %}
+{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
+    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
+        <input type="hidden" name="check" value="forward_b_to_a" />
+        <p><button>Проверить</button></p>
+    </form>
+{% elif meta is not none and meta.chapter != chapter.slug %}
+    <p>Чтобы запустить проверку, активируйте задание.</p>
+{% else %}
+    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
+{% endif %}
+{% endif %}
+{% if logs.forward_b_to_a %}
+<details>
+    <summary>Лог последней проверки в {{ logs.forward_b_to_a.created }} (UTC)</summary>
+    <pre><code>{{ logs.forward_b_to_a.text }}</code></pre>
+</details>
+{% endif %}
+
+
+<h3>Часть 2. Сетевые огрничения</h3>
+
+<p>Если вы просто включили пересылку пакетов в предыдущем задани, то вы неявно дали позволили устройствам обоих сетей слать пакеты в интернету.
+    Поскольку у нас пока не настроен NAT, то пользы от этого не очень много: ответ на UDP пакет не дойдет, а TCP соединение установить не получится.
+</p>
+
+<p>Тем не менее, давайте ограничим устройства в <strong>сети A</strong> и запретим слать udp пакеты любым хостам вне нашил приватных сетей.</p>
+
+<p>Теперь давайте дополнительно ограничим нашу <strong>сеть A</strong>.
+    Для этого запретите установку TCP соединений из <strong>сети B</strong> в <strong>сеть A</strong>.
+    При этом у устройств <strong>сети A</strong> все еще должна быть возможность открывать соединения в <strong>сеть B</strong>.
+</p>
+
+{{ checkpoint(tasks.tcp_unidirectional) }}
+
+{% if not tasks.tcp_unidirectional.is_solved %}
+{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
+    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
+        <input type="hidden" name="check" value="tcp_unidirectional" />
+        <p><button>Проверить</button></p>
+    </form>
+{% elif meta is not none and meta.chapter != chapter.slug %}
+    <p>Чтобы запустить проверку, активируйте задание.</p>
+{% else %}
+    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
+{% endif %}
+{% endif %}
+{% if logs.tcp_unidirectional %}
+<details>
+    <summary>Лог последней проверки в {{ logs.tcp_unidirectional.created }} (UTC)</summary>
+    <pre><code>{{ logs.tcp_unidirectional.text }}</code></pre>
+</details>
+{% endif %}
+
+<p>В <strong>сети B</strong> есть очень уязвимое устройство, которое имеет ip <code>{{ variant.ip4_b_client2 }}</code>.
+Защитите его и запретите пересылку UDP пакетов на все порты, кроме <code>3001</code> и <code>{{ variant.allow_udp_port2 }}</code>.</p>
+
+{{ checkpoint(tasks.udp_ports) }}
+
+{% if not tasks.udp_ports.is_solved %}
+{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
+    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
+        <input type="hidden" name="check" value="udp_ports" />
+        <p><button>Проверить</button></p>
+    </form>
+{% elif meta is not none and meta.chapter != chapter.slug %}
+    <p>Чтобы запустить проверку, активируйте задание.</p>
+{% else %}
+    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
+{% endif %}
+{% endif %}
+{% if logs.udp_ports %}
+<details>
+    <summary>Лог последней проверки в {{ logs.udp_ports.created }} (UTC)</summary>
+    <pre><code>{{ logs.udp_ports.text }}</code></pre>
+</details>
+{% endif %}
+
+<p>Иногда из <strong>сети A</strong> в <strong>сеть B</strong> приходят TCP-фреймы с вредным содержимым.
+Известно, что внутри таких фреймов содержится фраза <code>{{ variant.tcp_bad_word }}</code>. Запретите все такие пакеты.
+</p>
+
+{{ checkpoint(tasks.tcp_body_filter) }}
+
+{% if not tasks.tcp_body_filter.is_solved %}
+{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
+    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
+        <input type="hidden" name="check" value="tcp_body_filter" />
+        <p><button>Проверить</button></p>
+    </form>
+{% elif meta is not none and meta.chapter != chapter.slug %}
+    <p>Чтобы запустить проверку, активируйте задание.</p>
+{% else %}
+    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
+{% endif %}
+{% endif %}
+{% if logs.tcp_body_filter %}
+<details>
+    <summary>Лог последней проверки в {{ logs.tcp_body_filter.created }} (UTC)</summary>
+    <pre><code>{{ logs.tcp_body_filter.text }}</code></pre>
+</details>
+{% endif %}
+
+
+<h3>Часть 3. NAT</h3>
+
+<p>Давайте улучшим наш файервол и настроем на нем трансляцию сетевых адресов.
+Настройте форвардинг так, чтобы в пакетах, исходящих из <code>сетей A</code> и <code>B</code>
+    при переходе через файервол подменялся адрес источника.
+</p>
+
+{{ checkpoint(tasks.forward_nat) }}
+
+{% if not tasks.forward_nat.is_solved %}
+{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
+    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
+        <input type="hidden" name="check" value="forward_nat" />
+        <p><button>Проверить</button></p>
+    </form>
+{% elif meta is not none and meta.chapter != chapter.slug %}
+    <p>Чтобы запустить проверку, активируйте задание.</p>
+{% else %}
+    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
+{% endif %}
+{% endif %}
+{% if logs.forward_nat %}
+<details>
+    <summary>Лог последней проверки в {{ logs.forward_nat.created }} (UTC)</summary>
+    <pre><code>{{ logs.forward_nat.text }}</code></pre>
+</details>
+{% endif %}
+
+
+<p>
+    В вашей сети находится устройство с MAC-адресом <code>{{ variant.ll_mac }}</code>. Используя примеры и RFC, посчитайте
+    его link-local-адрес. Проверьте свою догадку, отправив пинг.
+</p>
+
+{{ checkpoint(tasks.ping_ll) }}
+
+<p>
+    Однако, дальше локальной сети мы так далеко не уйдём. Со SLAAC — каноничным методом получения «глобального»
+    IPv6-адреса мы познакомимся позже, а пока в нашей сети нет роутера, придётся настраивать адрес вручную.
+    На этот раз ваш адрес <code>{{ variant.ip6_client }}</code>, а маска подсети — /64. Назначьте его одному из ваших устройств.
+</p>
+
+<p>
+    Другому устройству поставьте какой-нибудь ещё адрес в той же подсети. Проверьте, что вы всё настроили верно.
+</p>
+
+<details>
+    <summary>Глобальные? Это как?</summary>
+    <p>Тут стоит заметить, что «глобальный» IPv6-адрес не означает «доступный в интернете». Это лишь обозначение
+    тех адресов, пакеты между которыми могут быть доставлены за пределами одной локальной сети.</p>
+    <p>В частности, адреса, начинающиеся на <code>fd</code>, как правило, не связаны с интернетом, и используются
+    в частных сетях (наподобие нашей внутренней). Публичные адреса на сегодняшний день находятся в блоке
+    <code>2000:/3</code>.
+    </p>
+</details>
+
+<p>
+    После настройки сети попробуйте пропинговать узел <code>{{ variant.ip6_server }}</code> и определить его MAC-адрес.
+</p>
+
+{{ checkpoint(tasks.ping6) }}
+
+{{ checkpoint(tasks.mac6) }}
+
+{% if not tasks.mac6.is_solved %}
+{{ render_form(forms.mac6) }}
+{% endif %}
+
+<p>
+    Попробуйте вычислить link-local-адреса этого и всех остальных узлов в сети. Проверьте вашу догадку, пропинговав
+    адрес <code>ff02::1</code>. Это — multicast-адрес, запросы к нему получат все узлы в локальной сети. К нему, конечно,
+    тоже нужно указывать интерфейс. Обратите внимание: на один пинг-запрос вы получите сразу несколько ответов.
+    Так можно узнать, сколько всего устройств (если считать, что IPv6 поддерживается практически любым чайником) есть
+    в вашей локальной сети.
+</p>
+
+<h3>Часть 4. MTU</h3>
+
+<p>
+    Последнее задание — чуть сложнее, чем обычно. До хоста <code>{{ variant.ip6_server }}</code> не доходят большие пакеты.
+    Определите максимальный размер пакета, который принимает этот узел. Укажите его в байтах.
+</p>
+
+{{ checkpoint(tasks.mtu) }}
+
+{% if not tasks.mtu.is_solved %}
+{{ render_form(forms.mtu) }}
+{% endif %}
+{% endblock %}

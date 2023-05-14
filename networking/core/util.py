@@ -36,14 +36,14 @@ def generate_subnet(rnd: Random, network: IPNetwork, new_prefix_len: int) -> IPN
     return IPNetwork((new_addr, new_prefix_len), version=network.version)
 
 
-def generate_address(rnd: Random, network: IPNetwork) -> IPAddress:
+def generate_address(rnd: Random, network: IPNetwork, no_gateway: bool = False) -> IPAddress:
     bit_count = get_address_size(network) - network.prefixlen
     if bit_count == 0:
         return network.ip
 
     entropy = rnd.getrandbits(bit_count)
     if bit_count > 1:
-        while entropy == 0 or entropy == (1 << bit_count) - 1:
+        while entropy == 0 or entropy == (1 << bit_count) - 1 or (no_gateway and entropy == 1):
             entropy = rnd.getrandbits(bit_count)
 
     return IPAddress(network.first | entropy, version=network.version)
