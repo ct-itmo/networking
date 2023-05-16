@@ -16,13 +16,19 @@ func main() {
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	startUDPServer(os.Getenv("BOX_IP") + ":3001")
-	startTCPServer(os.Getenv("BOX_IP") + ":3002")
-
 	for _, addr := range strings.Split(os.Getenv("OTHER_UDP_SERVER"), ",") {
 		if addr == "" {
 			continue
 		}
 		startUDPServer(addr)
+	}
+
+	startTCPServer(os.Getenv("BOX_IP") + ":3002")
+	for _, addr := range strings.Split(os.Getenv("OTHER_TCP_SERVER"), ",") {
+		if addr == "" {
+			continue
+		}
+		startTCPServer(addr)
 	}
 
 	if os.Getenv("TIMEOUT") != "" {
@@ -33,8 +39,8 @@ func main() {
 		}
 
 		select {
-		case _ = <-time.After(timeout):
-		case _ = <-done:
+		case <-time.After(timeout):
+		case <-done:
 		}
 
 	} else {

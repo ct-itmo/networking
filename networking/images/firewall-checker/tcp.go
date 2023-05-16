@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -25,7 +27,7 @@ func checkTcpWithContent(addr string, body string) (bool, error) {
 func sendTcp(addr string, body string) (string, error) {
 	conn, err := net.DialTimeout("tcp", addr, tcpConnectTimeout)
 	if err != nil {
-		if nerr, ok := err.(net.Error); ok && nerr.Timeout() {
+		if nerr, ok := err.(net.Error); ok && nerr.Timeout() || errors.Is(err, syscall.ECONNREFUSED) {
 			return "", nil
 		}
 		fmt.Printf("ERROR: failed to create tcp connection: %v\n", err.Error())
@@ -35,7 +37,7 @@ func sendTcp(addr string, body string) (string, error) {
 	defer conn.Close()
 	_, err = conn.Write([]byte(body))
 	if err != nil {
-		if nerr, ok := err.(net.Error); ok && nerr.Timeout() {
+		if nerr, ok := err.(net.Error); ok && nerr.Timeout() || errors.Is(err, syscall.ECONNREFUSED) {
 			return "", nil
 		}
 		fmt.Printf("ERROR: failed send data using udp: %v\n", err.Error())
@@ -46,7 +48,7 @@ func sendTcp(addr string, body string) (string, error) {
 	conn.SetReadDeadline(time.Now().Add(tcpReadTimeout))
 	receivedLen, err := conn.Read(received)
 	if err != nil {
-		if nerr, ok := err.(net.Error); ok && nerr.Timeout() {
+		if nerr, ok := err.(net.Error); ok && nerr.Timeout() || errors.Is(err, syscall.ECONNREFUSED) {
 			return "", nil
 		}
 		fmt.Printf("ERROR: failed to receive data using udp: %v\n", err.Error())

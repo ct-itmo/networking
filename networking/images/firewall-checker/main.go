@@ -20,6 +20,10 @@ func main() {
 		checkResult = checkBodyFilter()
 	case "forwarding_nat":
 		checkResult = checkForwardingNAT()
+	case "icmp_config":
+		checkResult = checkICMPConfig()
+	case "http_access":
+		checkResult = checkHttpAccess()
 	default:
 		fmt.Printf("Unknown checking mode %s\n", mode)
 		return

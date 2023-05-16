@@ -223,62 +223,57 @@
 
 
 <p>
-    В вашей сети находится устройство с MAC-адресом <code>{{ variant.ll_mac }}</code>. Используя примеры и RFC, посчитайте
-    его link-local-адрес. Проверьте свою догадку, отправив пинг.
+    Есть подоздрение, что в <code>сети B</code> кто-то хочет узнать больше о структуре нашей сети.
+    Давайте помешаем этим людям, немного модифицировав ICMP пакеты, проходящие через наш файервол из <code>сети B</code> в <code>сеть A</code>.
+    Во первых, сделайте так, что TTL всех ICMP пакетов, выходящих из файервола был равен {{ variant.icmp_ttl }}.
+    Во вторых, давайте будем терять 25% ICMP пакетов.
 </p>
 
-{{ checkpoint(tasks.ping_ll) }}
+{{ checkpoint(tasks.icmp_config) }}
 
-<p>
-    Однако, дальше локальной сети мы так далеко не уйдём. Со SLAAC — каноничным методом получения «глобального»
-    IPv6-адреса мы познакомимся позже, а пока в нашей сети нет роутера, придётся настраивать адрес вручную.
-    На этот раз ваш адрес <code>{{ variant.ip6_client }}</code>, а маска подсети — /64. Назначьте его одному из ваших устройств.
-</p>
-
-<p>
-    Другому устройству поставьте какой-нибудь ещё адрес в той же подсети. Проверьте, что вы всё настроили верно.
-</p>
-
+{% if not tasks.icmp_config.is_solved %}
+{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
+    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
+        <input type="hidden" name="check" value="icmp_config" />
+        <p><button>Проверить</button></p>
+    </form>
+{% elif meta is not none and meta.chapter != chapter.slug %}
+    <p>Чтобы запустить проверку, активируйте задание.</p>
+{% else %}
+    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
+{% endif %}
+{% endif %}
+{% if logs.icmp_config %}
 <details>
-    <summary>Глобальные? Это как?</summary>
-    <p>Тут стоит заметить, что «глобальный» IPv6-адрес не означает «доступный в интернете». Это лишь обозначение
-    тех адресов, пакеты между которыми могут быть доставлены за пределами одной локальной сети.</p>
-    <p>В частности, адреса, начинающиеся на <code>fd</code>, как правило, не связаны с интернетом, и используются
-    в частных сетях (наподобие нашей внутренней). Публичные адреса на сегодняшний день находятся в блоке
-    <code>2000:/3</code>.
-    </p>
+    <summary>Лог последней проверки в {{ logs.icmp_config.created }} (UTC)</summary>
+    <pre><code>{{ logs.icmp_config.text }}</code></pre>
 </details>
-
-<p>
-    После настройки сети попробуйте пропинговать узел <code>{{ variant.ip6_server }}</code> и определить его MAC-адрес.
-</p>
-
-{{ checkpoint(tasks.ping6) }}
-
-{{ checkpoint(tasks.mac6) }}
-
-{% if not tasks.mac6.is_solved %}
-{{ render_form(forms.mac6) }}
 {% endif %}
 
 <p>
-    Попробуйте вычислить link-local-адреса этого и всех остальных узлов в сети. Проверьте вашу догадку, пропинговав
-    адрес <code>ff02::1</code>. Это — multicast-адрес, запросы к нему получат все узлы в локальной сети. К нему, конечно,
-    тоже нужно указывать интерфейс. Обратите внимание: на один пинг-запрос вы получите сразу несколько ответов.
-    Так можно узнать, сколько всего устройств (если считать, что IPv6 поддерживается практически любым чайником) есть
-    в вашей локальной сети.
+    В части 1 мы запретили доступ из наших приватных сетей в интернет.
+    Давате теперь разрешим из <code>сети A</code> отправлять HTTP и HTTPS запросы на порты 80 и 443 к только одному адресу в интернете, в который разрешается домен <code>ctddev.ifmo.ru</code>.
 </p>
 
-<h3>Часть 4. MTU</h3>
+{{ checkpoint(tasks.http_access) }}
 
-<p>
-    Последнее задание — чуть сложнее, чем обычно. До хоста <code>{{ variant.ip6_server }}</code> не доходят большие пакеты.
-    Определите максимальный размер пакета, который принимает этот узел. Укажите его в байтах.
-</p>
-
-{{ checkpoint(tasks.mtu) }}
-
-{% if not tasks.mtu.is_solved %}
-{{ render_form(forms.mtu) }}
+{% if not tasks.http_access.is_solved %}
+{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
+    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
+        <input type="hidden" name="check" value="http_access" />
+        <p><button>Проверить</button></p>
+    </form>
+{% elif meta is not none and meta.chapter != chapter.slug %}
+    <p>Чтобы запустить проверку, активируйте задание.</p>
+{% else %}
+    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
 {% endif %}
+{% endif %}
+{% if logs.http_access %}
+<details>
+    <summary>Лог последней проверки в {{ logs.http_access.created }} (UTC)</summary>
+    <pre><code>{{ logs.http_access.text }}</code></pre>
+</details>
+{% endif %}
+
 {% endblock %}

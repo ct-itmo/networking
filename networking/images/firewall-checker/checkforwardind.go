@@ -1,9 +1,16 @@
 package main
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"time"
+
+	"github.com/go-ping/ping"
 )
 
 func logConnectionResult(requestType string, addr string, requestResult bool, requestErr error, expectedResult bool, portType string) {
@@ -45,6 +52,7 @@ func checkForwarding() bool {
 	return checkResult
 }
 
+// TODO: refactor
 func checkTCPUnidirectional() bool {
 	checkResult := true
 	validUDPAddreses := os.Getenv("UDP_VALID_ADDRESSES")
@@ -144,6 +152,96 @@ func checkForwardingNAT() bool {
 		ok := strings.HasPrefix(message, "Hello, TCP "+os.Getenv("NAT_IP"))
 		logConnectionResult("TCP", addr, ok, err, true, "")
 		checkResult = checkResult && err == nil && ok
+	}
+
+	return checkResult
+}
+
+func checkICMPConfig() bool {
+	host := strings.Split(os.Getenv("PING_VALID_IPS"), ",")[0]
+	expectedTTL, err := strconv.Atoi(os.Getenv("PING_EXPECTED_TTL"))
+	if err != nil {
+		fmt.Println("Invalid PING_EXPECTED_TTL variable")
+		return false
+	}
+
+	pinger, err := ping.NewPinger(host)
+	if err != nil {
+		fmt.Printf("Invalid host %s: %v\n", host, err)
+		return false
+	}
+	pinger.Count = 12
+	pinger.Size = 128
+	pinger.TTL = 64
+	pinger.Timeout = 15 * time.Second
+	// pinger.SetPrivileged(true)
+
+	ttlOk := true
+	pinger.OnRecv = func(p *ping.Packet) {
+		if ttlOk && p.Ttl != expectedTTL {
+			fmt.Printf("Received ICMP with TTL %d, but excepted %d\n", p.Ttl, expectedTTL)
+			ttlOk = false
+		}
+	}
+
+	if err = pinger.Run(); err != nil {
+		fmt.Printf("Failed to ping host %v: %v\n", host, err)
+		return false
+	}
+	stats := pinger.Statistics()
+	fmt.Printf("%d packets transmitted, %d received, %f%% packet loss to %s\n", stats.PacketsSent, stats.PacketsRecv,
+		stats.PacketLoss, host)
+
+	return stats.PacketsSent == pinger.Count && 15 <= stats.PacketLoss && stats.PacketLoss <= 35 && stats.PacketsRecvDuplicates == 0 && ttlOk
+}
+
+func logHttpResult(url string, requestResult bool, expectedResult bool) {
+	fmt.Printf("HTTP acces to %s %s (expected %s)\n",
+		url, formatCheckResult(requestResult), formatCheckResult(expectedResult))
+}
+
+func checkHttpAccess() bool {
+	checkResult := true
+	httpClient := http.Client{Timeout: 1 * time.Second}
+
+	validUrls := strings.Split(os.Getenv("HTTP_VALID_URLS"), ",")
+	for _, url := range validUrls {
+		if url == "" {
+			continue
+		}
+		_, err := httpClient.Get(url)
+		logHttpResult(url, err == nil, true)
+		checkResult = checkResult && err == nil
+	}
+
+	for _, url := range strings.Split(os.Getenv("HTTP_INVALID_URLS"), ",") {
+		if url == "" {
+			continue
+		}
+		_, err := httpClient.Get(url)
+		logHttpResult(url, err == nil, false)
+		checkResult = checkResult && err != nil
+	}
+
+	secretSeed := os.Getenv("SECRET_SEED")
+	message := fmt.Sprintf("%s_%s_%s", os.Getenv("TASK"), os.Getenv("USER_ID"), time.Now().Format(time.RFC3339Nano))
+	messageKey := fmt.Sprintf("%x", sha256.Sum256([]byte(message+"_"+secretSeed)))
+	expectedSignature := fmt.Sprintf("%x",
+		sha256.Sum256([]byte(fmt.Sprintf("OK_%s_%s_%s", message, messageKey, secretSeed))))
+
+	responce, err := httpClient.Get(validUrls[0] + "/api/signature?message=" + message + "&key=" + messageKey)
+	if err != nil {
+		logHttpResult(validUrls[0], false, true)
+		return false
+	}
+	signature, err := ioutil.ReadAll(responce.Body)
+	if err != nil {
+		fmt.Println("HTTP failed to read http responce")
+		return false
+	}
+	if expectedSignature != string(signature) {
+		fmt.Println("Invalid HTTP checker server signature")
+		return false
 	}
 
 	return checkResult

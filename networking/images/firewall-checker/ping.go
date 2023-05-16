@@ -26,9 +26,7 @@ func checkPing(host string) (bool, error) {
 		return false, err
 	}
 	stats := pinger.Statistics()
-	// fmt.Printf("Ping %s: %d packets transmitted, %d packets received, %d duplicates, %v%% packet loss\n",
-	// stats.Addr, stats.PacketsSent, stats.PacketsRecv, stats.PacketsRecvDuplicates, stats.PacketLoss)
 
-	return stats.PacketsSent == countOfPackages && stats.PacketsRecv == countOfPackages &&
+	return stats.PacketsSent == countOfPackages && stats.PacketsRecv > 0 &&
 		stats.PacketsRecvDuplicates == 0, nil
 }

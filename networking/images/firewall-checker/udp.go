@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -41,7 +43,7 @@ func sendUdp(addr string) (string, error) {
 	conn.SetReadDeadline(time.Now().Add(udpReadTimeout))
 	receivedLen, err := conn.Read(received)
 	if err != nil {
-		if nerr, ok := err.(net.Error); ok && nerr.Timeout() {
+		if nerr, ok := err.(net.Error); ok && nerr.Timeout() || errors.Is(err, syscall.ECONNREFUSED) {
 			return "", nil
 		}
 		fmt.Printf("ERROR: failed to receive data using udp: %v\n", err.Error())
