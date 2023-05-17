@@ -15,6 +15,7 @@
 ```
 SECRET_SEED=...
 SOCKET_PATH=/path/to/networking.sock
+EXTERNAL_BASE_URL=http://localhost:12003
 
 DNS_REGEXP_IP=^SECRET$
 DNS_REGEXP_SERVERS=^SECRET$

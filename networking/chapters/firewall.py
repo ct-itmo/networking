@@ -153,6 +153,8 @@ class FirewallVariant:
 
         self.tcp_bad_word = f"{rnd.choice(NOUNS)}-{rnd.randint(1, 100)}"
 
+        self.http_access_host = EXTERNAL_BASE_URL
+
         def make_checker_meta(name: str, network_type: Literal["A", "B"], check_mode: str,
                               environment: dict[str, str] = None, task: str | None = None,
                               add_gateway: bool = True, add_socket_volume: bool = False) -> ContainerMeta:
