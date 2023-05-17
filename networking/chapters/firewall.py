@@ -155,7 +155,7 @@ class FirewallVariant:
 
         self.http_access_host = EXTERNAL_BASE_URL
 
-        def make_checker_meta(name: str, network_type: Literal["A", "B"], check_mode: str,
+        def make_checker_meta(name: str, network_type: Literal["A", "B"], check_mode: str = "basic",
                               environment: dict[str, str] = None, task: str | None = None,
                               add_gateway: bool = True, add_socket_volume: bool = False) -> ContainerMeta:
             environment = {} if environment is None else environment
@@ -216,7 +216,6 @@ class FirewallVariant:
                 make_checker_meta(
                     name="ping",
                     network_type="B",
-                    check_mode="setup",
                     task="setup",
                     environment={
                         "BOX_IP2": str(ip4_a_checker),
@@ -231,7 +230,6 @@ class FirewallVariant:
                 make_checker_meta(
                     name="forward-a-to-b",
                     network_type="A",
-                    check_mode="forwarding",
                     task="forward_a_to_b",
                     environment={
                         "PING_VALID_IPS": str(self.ip4_b_firewall) + "," + str(self.ip4_b_client),
@@ -245,7 +243,6 @@ class FirewallVariant:
                 make_checker_meta(
                     name="forward-b-to-a",
                     network_type="B",
-                    check_mode="forwarding",
                     task="forward_b_to_a",
                     environment={
                         "PING_VALID_IPS": str(self.ip4_a_firewall) + "," + str(self.ip4_a_client),
@@ -258,7 +255,6 @@ class FirewallVariant:
                 make_checker_meta(
                     name="tcp-unidirectional-a",
                     network_type="A",
-                    check_mode="tcp_unidirectional",
                     environment={
                         "PING_VALID_IPS": str(self.ip4_a_client) + "," + str(self.ip4_b_client),
                         "UDP_VALID_ADDRESSES": addresses_list((self.ip4_a_client, 3001), (self.ip4_b_client, 3001)),
@@ -269,7 +265,6 @@ class FirewallVariant:
                 make_checker_meta(
                     name="tcp-unidirectional-b",
                     network_type="B",
-                    check_mode="tcp_unidirectional",
                     environment={
                         "PING_VALID_IPS": str(self.ip4_a_client) + "," + str(self.ip4_b_client),
                         "UDP_VALID_ADDRESSES": addresses_list((self.ip4_a_client, 3001), (self.ip4_b_client, 3001)),
@@ -283,7 +278,6 @@ class FirewallVariant:
                 make_checker_meta(
                     name="udp-ports-a",
                     network_type="A",
-                    check_mode="tcp_unidirectional",
                     environment={
                         "PING_VALID_IPS": str(self.ip4_b_client2),
                         "UDP_VALID_ADDRESSES":
@@ -296,7 +290,6 @@ class FirewallVariant:
                 make_checker_meta(
                     name="udp-ports-b",
                     network_type="B",
-                    check_mode="tcp_unidirectional",
                     environment={
                         "UDP_VALID_ADDRESSES": addresses_list((self.ip4_a_client, 3001), (self.ip4_b_client, 3001)),
                     },

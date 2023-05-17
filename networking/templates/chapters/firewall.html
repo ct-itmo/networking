@@ -3,6 +3,23 @@
 {% block chapter %}
 {% set meta = user.docker_meta %}
 
+{% macro check_button(task_name) %}
+{% set meta = user.docker_meta %}
+{% if not tasks[task_name].is_solved %}
+{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
+    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
+        <input type="hidden" name="check" value="{{ task_name }}" />
+        <p><button>Проверить</button></p>
+    </form>
+{% elif meta is not none and meta.chapter != chapter.slug %}
+    <p>Чтобы запустить проверку, активируйте задание.</p>
+{% else %}
+    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
+{% endif %}
+{% endif %}
+{% endmacro %}
+
+
 <p>Дедлайн — <strong>TBA</strong>, 23:59 МСК. После этого задания будут стоить на четверть дешевле.</p>
 
 <p>
@@ -52,25 +69,8 @@ sudo UV_NETWORK=internalB openvpn --config config-linux.ovpn --daemon</code></pr
 </p>
 
 {{ checkpoint(tasks.setup) }}
-
-{% if not tasks.setup.is_solved %}
-{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
-    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
-        <input type="hidden" name="check" value="setup" />
-        <p><button>Проверить</button></p>
-    </form>
-{% elif meta is not none and meta.chapter != chapter.slug %}
-    <p>Чтобы запустить проверку, активируйте задание.</p>
-{% else %}
-    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
-{% endif %}
-{% endif %}
-{% if logs.setup %}
-<details>
-    <summary>Лог последней проверки в {{ logs.setup.created }} (UTC)</summary>
-    <pre><code>{{ logs.setup.text }}</code></pre>
-</details>
-{% endif %}
+{{ check_button("setup") }}
+{{ check_log(logs.setup) }}
 
 <p>
     А теперь давайте позволим устройствам из разых сетей общаться друг с другом.
@@ -82,46 +82,12 @@ sudo UV_NETWORK=internalB openvpn --config config-linux.ovpn --daemon</code></pr
 Если все хорошо, то вы закроете еще два чекпоинта.</p>
 
 {{ checkpoint(tasks.forward_a_to_b) }}
-
-{% if not tasks.forward_a_to_b.is_solved %}
-{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
-    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
-        <input type="hidden" name="check" value="forward_a_to_b" />
-        <p><button>Проверить</button></p>
-    </form>
-{% elif meta is not none and meta.chapter != chapter.slug %}
-    <p>Чтобы запустить проверку, активируйте задание.</p>
-{% else %}
-    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
-{% endif %}
-{% endif %}
-{% if logs.forward_a_to_b %}
-<details>
-    <summary>Лог последней проверки в {{ logs.forward_a_to_b.created }} (UTC)</summary>
-    <pre><code>{{ logs.forward_a_to_b.text }}</code></pre>
-</details>
-{% endif %}
+{{ check_button("forward_a_to_b") }}
+{{ check_log(logs.forward_a_to_b) }}
 
 {{ checkpoint(tasks.forward_b_to_a) }}
-
-{% if not tasks.forward_b_to_a.is_solved %}
-{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
-    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
-        <input type="hidden" name="check" value="forward_b_to_a" />
-        <p><button>Проверить</button></p>
-    </form>
-{% elif meta is not none and meta.chapter != chapter.slug %}
-    <p>Чтобы запустить проверку, активируйте задание.</p>
-{% else %}
-    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
-{% endif %}
-{% endif %}
-{% if logs.forward_b_to_a %}
-<details>
-    <summary>Лог последней проверки в {{ logs.forward_b_to_a.created }} (UTC)</summary>
-    <pre><code>{{ logs.forward_b_to_a.text }}</code></pre>
-</details>
-{% endif %}
+{{ check_button("forward_b_to_a") }}
+{{ check_log(logs.forward_b_to_a) }}
 
 
 <h3>Часть 2. Сетевые огрничения</h3>
@@ -138,74 +104,23 @@ sudo UV_NETWORK=internalB openvpn --config config-linux.ovpn --daemon</code></pr
 </p>
 
 {{ checkpoint(tasks.tcp_unidirectional) }}
-
-{% if not tasks.tcp_unidirectional.is_solved %}
-{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
-    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
-        <input type="hidden" name="check" value="tcp_unidirectional" />
-        <p><button>Проверить</button></p>
-    </form>
-{% elif meta is not none and meta.chapter != chapter.slug %}
-    <p>Чтобы запустить проверку, активируйте задание.</p>
-{% else %}
-    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
-{% endif %}
-{% endif %}
-{% if logs.tcp_unidirectional %}
-<details>
-    <summary>Лог последней проверки в {{ logs.tcp_unidirectional.created }} (UTC)</summary>
-    <pre><code>{{ logs.tcp_unidirectional.text }}</code></pre>
-</details>
-{% endif %}
+{{ check_button("tcp_unidirectional") }}
+{{ check_log(logs.tcp_unidirectional) }}
 
 <p>В <code>сети B</code> есть очень уязвимое устройство, которое имеет ip <code>{{ variant.ip4_b_client2 }}</code>.
 Защитите его и запретите пересылку UDP пакетов на все порты, кроме <code>3001</code> и <code>{{ variant.allow_udp_port2 }}</code>.</p>
 
 {{ checkpoint(tasks.udp_ports) }}
-
-{% if not tasks.udp_ports.is_solved %}
-{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
-    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
-        <input type="hidden" name="check" value="udp_ports" />
-        <p><button>Проверить</button></p>
-    </form>
-{% elif meta is not none and meta.chapter != chapter.slug %}
-    <p>Чтобы запустить проверку, активируйте задание.</p>
-{% else %}
-    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
-{% endif %}
-{% endif %}
-{% if logs.udp_ports %}
-<details>
-    <summary>Лог последней проверки в {{ logs.udp_ports.created }} (UTC)</summary>
-    <pre><code>{{ logs.udp_ports.text }}</code></pre>
-</details>
-{% endif %}
+{{ check_button("udp_ports") }}
+{{ check_log(logs.udp_ports) }}
 
 <p>Иногда из <code>сети A</code> в <code>сеть B</code> приходят TCP-фреймы с вредным содержимым.
 Известно, что внутри таких фреймов содержится фраза <code>{{ variant.tcp_bad_word }}</code>. Запретите все такие пакеты.
 </p>
 
 {{ checkpoint(tasks.tcp_body_filter) }}
-
-{% if not tasks.tcp_body_filter.is_solved %}
-{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
-    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
-        <input type="hidden" name="check" value="tcp_body_filter" />
-        <p><button>Проверить</button></p>
-    </form>
-{% elif meta is not none and meta.chapter != chapter.slug %}
-    <p>Чтобы запустить проверку, активируйте задание.</p>
-{% else %}
-    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
-{% endif %}
-{% endif %}
-{% if logs.tcp_body_filter %}
-<details>
-    <summary>Лог последней проверки в {{ logs.tcp_body_filter.created }} (UTC)</summary>
-    <pre><code>{{ logs.tcp_body_filter.text }}</code></pre>
-</details>
-{% endif %}
+{{ check_button("tcp_body_filter") }}
+{{ check_log(logs.tcp_body_filter) }}
 
 
 <h3>Часть 3. NAT</h3>
@@ -216,25 +131,8 @@ sudo UV_NETWORK=internalB openvpn --config config-linux.ovpn --daemon</code></pr
 </p>
 
 {{ checkpoint(tasks.forward_nat) }}
-
-{% if not tasks.forward_nat.is_solved %}
-{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
-    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
-        <input type="hidden" name="check" value="forward_nat" />
-        <p><button>Проверить</button></p>
-    </form>
-{% elif meta is not none and meta.chapter != chapter.slug %}
-    <p>Чтобы запустить проверку, активируйте задание.</p>
-{% else %}
-    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
-{% endif %}
-{% endif %}
-{% if logs.forward_nat %}
-<details>
-    <summary>Лог последней проверки в {{ logs.forward_nat.created }} (UTC)</summary>
-    <pre><code>{{ logs.forward_nat.text }}</code></pre>
-</details>
-{% endif %}
+{{ check_button("forward_nat") }}
+{{ check_log(logs.forward_nat) }}
 
 
 <p>
@@ -245,25 +143,8 @@ sudo UV_NETWORK=internalB openvpn --config config-linux.ovpn --daemon</code></pr
 </p>
 
 {{ checkpoint(tasks.icmp_config) }}
-
-{% if not tasks.icmp_config.is_solved %}
-{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
-    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
-        <input type="hidden" name="check" value="icmp_config" />
-        <p><button>Проверить</button></p>
-    </form>
-{% elif meta is not none and meta.chapter != chapter.slug %}
-    <p>Чтобы запустить проверку, активируйте задание.</p>
-{% else %}
-    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
-{% endif %}
-{% endif %}
-{% if logs.icmp_config %}
-<details>
-    <summary>Лог последней проверки в {{ logs.icmp_config.created }} (UTC)</summary>
-    <pre><code>{{ logs.icmp_config.text }}</code></pre>
-</details>
-{% endif %}
+{{ check_button("icmp_config") }}
+{{ check_log(logs.icmp_config) }}
 
 <p>
     В части 2 мы запретили доступ из наших приватных сетей в интернет.
@@ -271,24 +152,7 @@ sudo UV_NETWORK=internalB openvpn --config config-linux.ovpn --daemon</code></pr
 </p>
 
 {{ checkpoint(tasks.http_access) }}
-
-{% if not tasks.http_access.is_solved %}
-{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
-    <form method="POST" action="{{ url_for("networking:firewall:check") }}">
-        <input type="hidden" name="check" value="http_access" />
-        <p><button>Проверить</button></p>
-    </form>
-{% elif meta is not none and meta.chapter != chapter.slug %}
-    <p>Чтобы запустить проверку, активируйте задание.</p>
-{% else %}
-    <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
-{% endif %}
-{% endif %}
-{% if logs.http_access %}
-<details>
-    <summary>Лог последней проверки в {{ logs.http_access.created }} (UTC)</summary>
-    <pre><code>{{ logs.http_access.text }}</code></pre>
-</details>
-{% endif %}
+{{ check_button("http_access") }}
+{{ check_log(logs.http_access) }}
 
 {% endblock %}

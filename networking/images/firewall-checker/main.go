@@ -8,14 +8,8 @@ import (
 func main() {
 	checkResult := false
 	switch mode := os.Getenv("CHECK_MODE"); mode {
-	case "setup":
-		checkResult = checkPings()
-	case "forwarding":
-		checkResult = checkPings()
-		checkResult = checkForwarding() && checkResult
-	case "tcp_unidirectional":
-		checkResult = checkPings()
-		checkResult = checkTCPUnidirectional() && checkResult
+	case "basic":
+		checkResult = checkBasic()
 	case "tcp_body_filter":
 		checkResult = checkBodyFilter()
 	case "forwarding_nat":

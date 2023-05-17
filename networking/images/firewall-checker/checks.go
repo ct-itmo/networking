@@ -13,6 +13,15 @@ import (
 	"github.com/go-ping/ping"
 )
 
+func logPingResult(ip string, pingResult bool, pingErr error, expecredResult bool) {
+	if pingErr != nil {
+		fmt.Printf("Unexpected error in checker. Ask administrator")
+		return
+	}
+	fmt.Printf("Ping from %s to %s: %s (expected %s)\n",
+		os.Getenv("BOX_NETWORK_NAME"), ip, formatCheckResult(pingResult), formatCheckResult(expecredResult))
+}
+
 func logConnectionResult(requestType string, addr string, requestResult bool, requestErr error, expectedResult bool, portType string) {
 	if requestErr != nil {
 		fmt.Println("Unexpected error in checker. Ask administrator")
@@ -26,74 +35,42 @@ func logConnectionResult(requestType string, addr string, requestResult bool, re
 		portType, formatCheckResult(requestResult), formatCheckResult(expectedResult))
 }
 
-func checkForwarding() bool {
-	checkResult := true
+func checkBasic() bool {
+	checkResult := checkByEnvList("PING_VALID_IPS", func(ip string) bool {
+		ok, err := checkPing(ip)
+		logPingResult(ip, ok, err, true)
+		return err == nil && ok
+	})
 
-	validUDPAddreses := os.Getenv("UDP_VALID_ADDRESSES")
-	for _, addr := range strings.Split(validUDPAddreses, ",") {
-		if addr == "" {
-			continue
-		}
+	checkResult = checkByEnvList("PING_INVALID_IPS", func(ip string) bool {
+		ok, err := checkPing(ip)
+		logPingResult(ip, ok, err, false)
+		return err == nil && !ok
+	}) && checkResult
+
+	checkResult = checkByEnvList("UDP_VALID_ADDRESSES", func(addr string) bool {
 		ok, err := checkUdp(addr)
 		logConnectionResult("UDP", addr, ok, err, true, "")
-		checkResult = err == nil && ok && checkResult
-	}
+		return err == nil && ok
+	}) && checkResult
 
-	validTCPAddreses := os.Getenv("TCP_VALID_ADDRESSES")
-	for _, addr := range strings.Split(validTCPAddreses, ",") {
-		if addr == "" {
-			continue
-		}
-		ok, err := checkTcp(addr)
-		logConnectionResult("TCP", addr, ok, err, true, "")
-		checkResult = checkResult && err == nil && ok
-	}
-
-	return checkResult
-}
-
-// TODO: refactor
-func checkTCPUnidirectional() bool {
-	checkResult := true
-	validUDPAddreses := os.Getenv("UDP_VALID_ADDRESSES")
-	for _, addr := range strings.Split(validUDPAddreses, ",") {
-		if addr == "" {
-			continue
-		}
-		ok, err := checkUdp(addr)
-		logConnectionResult("UDP", addr, ok, err, true, "")
-		checkResult = checkResult && err == nil && ok
-	}
-
-	invalidUDPAddreses := os.Getenv("UDP_INVALID_ADDRESSES")
-	for _, addr := range strings.Split(invalidUDPAddreses, ",") {
-		if addr == "" {
-			continue
-		}
+	checkResult = checkByEnvList("UDP_INVALID_ADDRESSES", func(addr string) bool {
 		ok, err := checkUdp(addr)
 		logConnectionResult("UDP", addr, ok, err, false, "no acessable")
-		checkResult = checkResult && err == nil && !ok
-	}
+		return err == nil && !ok
+	}) && checkResult
 
-	validTCPAddreses := os.Getenv("TCP_VALID_ADDRESSES")
-	for _, addr := range strings.Split(validTCPAddreses, ",") {
-		if addr == "" {
-			continue
-		}
+	checkResult = checkByEnvList("TCP_VALID_ADDRESSES", func(addr string) bool {
 		ok, err := checkTcp(addr)
 		logConnectionResult("TCP", addr, ok, err, true, "")
-		checkResult = checkResult && err == nil && ok
-	}
+		return err == nil && ok
+	}) && checkResult
 
-	invalidTCPAddreses := os.Getenv("TCP_INVALID_ADDRESSES")
-	for _, addr := range strings.Split(invalidTCPAddreses, ",") {
-		if addr == "" {
-			continue
-		}
+	checkResult = checkByEnvList("TCP_INVALID_ADDRESSES", func(addr string) bool {
 		ok, err := checkTcp(addr)
 		logConnectionResult("TCP", addr, ok, err, false, "")
-		checkResult = checkResult && err == nil && !ok
-	}
+		return err == nil && !ok
+	}) && checkResult
 
 	return checkResult
 }
@@ -118,41 +95,34 @@ func checkBodyFilter() bool {
 	checkContent(badWord, false)
 	checkContent("Hello! "+badWord+" Goodbye!", false)
 	checkContent("What is the good today?", true)
-	checkContent(badWord[1:len(badWord)], true)
+	checkContent(badWord[1:], true)
 	checkContent(badWord[0:len(badWord)-1], true)
 	x := len(badWord) / 2
-	checkContent(badWord[0:x]+"hahaha"+badWord[x:len(badWord)], true)
+	checkContent(badWord[0:x]+"hahaha"+badWord[x:], true)
 	checkContent(badWord+" or not "+badWord, false)
 
 	return checkResult
 }
 
 func checkForwardingNAT() bool {
-	checkResult := true
-
-	validUDPAddreses := os.Getenv("UDP_VALID_ADDRESSES")
-	for _, addr := range strings.Split(validUDPAddreses, ",") {
-		if addr == "" {
-			continue
-		}
+	checkResult := checkByEnvList("UDP_VALID_ADDRESSES", func(addr string) bool {
 		message, err := sendUdp(addr)
-		fmt.Println(message)
 		ok := strings.HasPrefix(message, "Hello, UDP "+os.Getenv("NAT_IP"))
 		logConnectionResult("UDP", addr, ok, err, true, "")
-		checkResult = err == nil && ok && checkResult
-	}
-
-	validTCPAddreses := os.Getenv("TCP_VALID_ADDRESSES")
-	for _, addr := range strings.Split(validTCPAddreses, ",") {
-		if addr == "" {
-			continue
+		if err == nil && !ok {
+			fmt.Println("[server received request, but request source address isn't firewall address]")
 		}
+		return err == nil && ok
+	})
+	checkResult = checkByEnvList("TCP_VALID_ADDRESSES", func(addr string) bool {
 		message, err := sendTcp(addr, "Hello TCP server")
-		fmt.Println(message)
 		ok := strings.HasPrefix(message, "Hello, TCP "+os.Getenv("NAT_IP"))
 		logConnectionResult("TCP", addr, ok, err, true, "")
-		checkResult = checkResult && err == nil && ok
-	}
+		if err == nil && !ok {
+			fmt.Println("[server received request, but request source address isn't firewall address]")
+		}
+		return err == nil && ok
+	}) && checkResult
 
 	return checkResult
 }
@@ -204,24 +174,17 @@ func checkHttpAccess() bool {
 	checkResult := true
 	httpClient := http.Client{Timeout: 1 * time.Second}
 
-	validUrls := strings.Split(os.Getenv("HTTP_VALID_URLS"), ",")
-	for _, url := range validUrls {
-		if url == "" {
-			continue
-		}
+	checkResult = checkByEnvList("HTTP_VALID_URLS", func(url string) bool {
 		_, err := httpClient.Get(url)
 		logHttpResult(url, err == nil, true)
-		checkResult = checkResult && err == nil
-	}
+		return err == nil
+	}) && checkResult
 
-	for _, url := range strings.Split(os.Getenv("HTTP_INVALID_URLS"), ",") {
-		if url == "" {
-			continue
-		}
+	checkResult = checkByEnvList("HTTP_INVALID_URLS", func(url string) bool {
 		_, err := httpClient.Get(url)
 		logHttpResult(url, err == nil, false)
-		checkResult = checkResult && err != nil
-	}
+		return err != nil
+	}) && checkResult
 
 	secretSeed := os.Getenv("SECRET_SEED")
 	message := fmt.Sprintf("%s_%s_%s", os.Getenv("TASK"), os.Getenv("USER_ID"), time.Now().Format(time.RFC3339Nano))
@@ -229,6 +192,7 @@ func checkHttpAccess() bool {
 	expectedSignature := fmt.Sprintf("%x",
 		sha256.Sum256([]byte(fmt.Sprintf("OK_%s_%s_%s", message, messageKey, secretSeed))))
 
+	validUrls := strings.Split(os.Getenv("HTTP_VALID_URLS"), ",")
 	responce, err := httpClient.Get(validUrls[0] + "/api/signature?message=" + message + "&key=" + messageKey)
 	if err != nil {
 		logHttpResult(validUrls[0], false, true)
