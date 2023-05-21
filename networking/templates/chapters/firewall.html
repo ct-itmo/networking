@@ -48,13 +48,17 @@
 
 <p>
     Для выполнения этого задания вам понадобится поддерживать два VPN подключения, эмулирующих подключение к двум независимым свичам.
-    Подключение выполняется через один и тот же VPN конфиг, однако при подключении нужно будет задать название сети, которой вы хотите подключиться, через переменную окружения <code>UV_NETWORK</code>.
+    Подключение выполняется через один и тот же VPN конфиг, однако при подключении нужно будет задать название сети, которой вы хотите подключиться, через переменную <code>UV_NETWORK</code>.
     Наши сети имею название <code>internalA</code> и <code>internalB</code>.
 </p>
 <details>
-<summary>Пример команды для подключения в Linux</summary>
-<pre><code>sudo UV_NETWORK=internalA openvpn --config config-linux.ovpn --daemon
-sudo UV_NETWORK=internalB openvpn --config config-linux.ovpn --daemon</code></pre>
+<summary>Пример команд для подключения в Linux</summary>
+<pre><code>sudo openvpn --config config-linux.ovpn --setenv UV_NETWORK internalA
+sudo openvpn --config config-linux.ovpn --setenv UV_NETWORK internalB</code></pre>
+
+<p>
+    К командам можно добавить опцию <code>--daemon</code>, чтобы подключение происходило в фоновом режиме.
+</p>
 </details>
 
 
@@ -148,7 +152,7 @@ sudo UV_NETWORK=internalB openvpn --config config-linux.ovpn --daemon</code></pr
 
 <p>
     В части 2 мы запретили доступ из наших приватных сетей в интернет.
-    Давате теперь разрешим из <code>сети A</code> отправлять HTTP и HTTPS запросы на порты 80 и 443 к только одному адресу в интернете, на котором существует сайт <code>{{ variant.http_access_host }}</code>.
+    Давате теперь разрешим из <code>сети A</code> отправлять HTTP и HTTPS запросы на порты 80 и 443 к только одному адресу в интернете, на котором существует сайт <code>nerc.itmo.ru</code>.
 </p>
 
 {{ checkpoint(tasks.http_access) }}
