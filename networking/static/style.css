@@ -179,3 +179,14 @@ h1 + .meta {
 .scoreboard td {
     white-space: nowrap;
 }
+
+.scoreboard th:not([colspan]) {
+    min-width: 45px;
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: "";
+}
+
+.scoreboard td:not(:nth-child(2)) {
+    text-align: center;
+}
