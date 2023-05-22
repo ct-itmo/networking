@@ -72,7 +72,7 @@ class CheckableMixin(BaseChapter[CheckableTaskProtocol]):
         form = await request.form()
         check = form.get("check")
         if not isinstance(check, str) or check not in variant.checks:
-            return RedirectResponse(f"{request.url_for(f'networking:{self.slug}:page')}", status_code=303)
+            return RedirectResponse(request.url_for(f"networking:{self.slug}:page"), status_code=303)
 
         try:
             meta = await lock_meta(session, user.id, self.slug, True)
@@ -80,7 +80,7 @@ class CheckableMixin(BaseChapter[CheckableTaskProtocol]):
         except DockerConflict:
             task = None
 
-        return RedirectResponse(request.url_for(f"networking:{self.slug}:page"), status_code=303, background=task)
+        return RedirectResponse(f"{request.url_for(f'networking:{self.slug}:page')}#{check}", status_code=303, background=task)
 
     async def check_task(self, session: AsyncSession, meta: DockerMeta, check_name: str, variant: CheckableTaskProtocol) -> None:
         check = variant.checks[check_name]
