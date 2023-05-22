@@ -100,7 +100,7 @@ class DNSVariant:
                         "BOX_IP": "10.52.1.2"
                     }
                 )
-            ], 0, "/out/dns.log", self.check_dns)
+            ], { 0: "/out/dns.log" }, self.check_dns)
         }
 
 

@@ -1,13 +1,14 @@
 import itertools
 from dataclasses import dataclass
 from decimal import Decimal
+from hashlib import sha256
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.exceptions import HTTPException
 from starlette.middleware import Middleware
 from starlette.requests import Request
-from starlette.responses import RedirectResponse, Response
+from starlette.responses import RedirectResponse, PlainTextResponse, Response
 from starlette.routing import Mount, Route
 
 from quirck.auth.middleware import AuthenticationMiddleware
@@ -20,6 +21,7 @@ from networking.chapters import chapters
 from networking.core.chapter.base import ChapterResult
 from networking.core.middleware import LoadDockerMetaMiddleware
 from networking.core.model import Attempt
+from networking.core.config import SECRET_SEED
 
 
 async def main_page(request: Request) -> Response:
@@ -123,7 +125,7 @@ async def vpn_win(request: Request) -> Response:
     )
 
 
-def get_mount():
+def get_user_mount():
     return Mount(
         path="/",
         routes=[
@@ -147,6 +149,28 @@ def get_mount():
             Middleware(LoadDockerMetaMiddleware)
         ],
         name="networking"
+    )
+
+
+def api_signature(request: Request) -> Response:
+    if "message" in request.query_params and "key" in request.query_params:
+        message = request.query_params["message"]
+        key = request.query_params["key"]
+        secret = str(SECRET_SEED)
+        if key == sha256(f"{message}_{secret}".encode("utf-8")).hexdigest():
+            sign = sha256(f"OK_{message}_{key}_{secret}".encode("utf-8")).hexdigest()
+            return PlainTextResponse(sign)
+
+    return PlainTextResponse("Bad key or message", status_code=400)
+
+
+def get_mount():
+    return Mount(
+        path="/",
+        routes=[
+            Route("/api/signature", api_signature, name="signature"),
+            get_user_mount(),
+        ]
     )
 
 

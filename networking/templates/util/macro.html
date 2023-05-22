@@ -59,3 +59,12 @@
     {% endif %}
 </p>
 {% endmacro %}
+
+{% macro check_log(log) %}
+{% if log %}
+<details>
+    <summary>Лог последней проверки в {{ log.created }} (UTC)</summary>
+    <pre><code>{{ log.text }}</code></pre>
+</details>
+{% endif %}
+{% endmacro %}
