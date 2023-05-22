@@ -6,6 +6,7 @@ from typing import Any, Generic, Sequence, TypeVar
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
 from starlette.routing import Mount, BaseRoute, Route
@@ -64,6 +65,7 @@ class BaseChapter(Generic[Variant]):
     name: str
     deadline: datetime | None
     hard_deadline: bool = False
+    private: bool = False
     tasks: list[ChapterTask]
 
     routes: list[BaseRoute]
@@ -139,6 +141,9 @@ class BaseChapter(Generic[Variant]):
     async def chapter_page(self, request: Request, context: dict[str, Any] = {}) -> Response:
         session: AsyncSession = request.scope["db"]
         user: User = request.scope["user"]
+
+        if self.private and not user.is_admin:
+            raise HTTPException(403, "Доступ запрещён")
 
         attempts = await self.get_attempts(request)
         last_report = (await session.scalars(

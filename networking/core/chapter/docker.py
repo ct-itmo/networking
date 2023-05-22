@@ -2,6 +2,7 @@ from typing import Protocol
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.background import BackgroundTask
+from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
 from starlette.routing import Route
@@ -28,6 +29,9 @@ class DockerMixin(BaseChapter[DockerTaskProtocol]):
     async def launch(self, request: Request) -> Response:
         session: AsyncSession = request.scope["db"]
         user: User = request.scope["user"]
+
+        if self.private and not user.is_admin:
+            raise HTTPException(403, "Доступ запрещён")
 
         variant = await self.get_variant(request)
 

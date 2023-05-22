@@ -40,6 +40,7 @@ async def main_page(request: Request) -> Response:
             if attempt.chapter == chapter.slug
         ])
         for chapter in chapters
+        if not chapter.private
     ]
 
     overall_score = sum((chapter.score for chapter in user_chapters), Decimal(0))

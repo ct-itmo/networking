@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 from starlette.background import BackgroundTask
+from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
 from starlette.routing import Route
@@ -62,6 +63,9 @@ class CheckableMixin(BaseChapter[CheckableTaskProtocol]):
     async def check(self, request: Request) -> Response:
         session: AsyncSession = request.scope["db"]
         user: User = request.scope["user"]
+
+        if self.private and not user.is_admin:
+            raise HTTPException(403, "Доступ запрещён")
 
         variant = await self.get_variant(request)
 

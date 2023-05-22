@@ -6,24 +6,22 @@ from typing import Literal
 
 from aiodocker.containers import DockerContainer
 from aiodocker.exceptions import DockerError
-from netaddr import EUI, IPAddress, IPNetwork
+from netaddr import IPAddress, IPNetwork
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
 from quirck.box.meta import Deployment, ContainerMeta, NetworkMeta
-from quirck.core.form import BaseTaskForm, RegexpForm
 from quirck.box.model import DockerMeta
 
 from networking.core import util
 from networking.core.chapter.base import BaseChapter, ChapterTask
 from networking.core.chapter.check import Check, CheckableMixin
 from networking.core.chapter.docker import DockerMixin
-from networking.core.chapter.form import FormMixin
 from networking.core.config import SECRET_SEED, EXTERNAL_BASE_URL
 from networking.core.model import Attempt
 
 
-def addresses_list(*addresses: tuple[str, int]) -> str:
+def addresses_list(*addresses: tuple[IPAddress, int]) -> str:
     return ",".join(str(ip) + ":" + str(port) for (ip, port) in addresses)
 
 
@@ -60,7 +58,7 @@ async def commit_correct_attempt(session: AsyncSession, meta: DockerMeta, task: 
 
 class FirewallVariant:
     deployment: Deployment
-    form_classes: list[type[BaseTaskForm]] = []
+    form_classes = []
 
     ip4_a_network: IPNetwork
     ip4_b_network: IPNetwork
@@ -156,19 +154,18 @@ class FirewallVariant:
         self.http_access_host = EXTERNAL_BASE_URL
 
         def make_checker_meta(name: str, network_type: Literal["A", "B"], check_mode: str = "basic",
-                              environment: dict[str, str] = None, task: str | None = None,
+                              environment: dict[str, str] = {}, task: str | None = None,
                               add_gateway: bool = True, add_socket_volume: bool = False) -> ContainerMeta:
-            environment = {} if environment is None else environment
             env = {
                 "BOX_IP": str(ip4_a_checker if network_type == "A" else ip4_b_checker),
                 "BOX_NETWORK_NAME": "internal" + network_type,
-                "CHECK_MODE": check_mode,
+                "CHECK_MODE": check_mode
             }
             if task is not None:
                 env["TASK"] = task
                 env["CHAPTER"] = "firewall"
             if add_gateway:
-                env["BOX_GATEWAY"] = self.ip4_a_firewall if network_type == "A" else self.ip4_b_firewall
+                env["BOX_GATEWAY"] = str(self.ip4_a_firewall if network_type == "A" else self.ip4_b_firewall)
 
             return ContainerMeta(
                 name="check-" + name,
@@ -176,7 +173,7 @@ class FirewallVariant:
                 networks={"internal" + network_type: str(mac_a_checker if network_type == "A" else mac_b_checker)},
                 ipv6_forwarding=False,
                 environment={**env, **environment},
-                volumes=util.socket_volume() if add_socket_volume else None
+                volumes=util.socket_volume() if add_socket_volume else {}
             )
 
         self.deployment = Deployment(
@@ -187,9 +184,9 @@ class FirewallVariant:
                     image="ct-itmo/labs-networking-firewall-client",
                     networks={"internalA": str(mac_a_client)},
                     environment={
-                        "BOX_IP": self.ip4_a_client,
-                        "BOX_IP2": self.ip4_a_client2,
-                        "BOX_GATEWAY": self.ip4_a_firewall,
+                        "BOX_IP": str(self.ip4_a_client),
+                        "BOX_IP2": str(self.ip4_a_client2),
+                        "BOX_GATEWAY": str(self.ip4_a_firewall),
                         "UDP_SERVERS": addresses_list((self.ip4_a_client, 3001)),
                         "TCP_SERVERS": addresses_list((self.ip4_a_client, 3002), (self.ip4_a_client2, 3333)),
                     },
@@ -200,8 +197,8 @@ class FirewallVariant:
                     image="ct-itmo/labs-networking-firewall-client",
                     networks={"internalB": str(mac_b_client)},
                     environment={
-                        "BOX_IP": self.ip4_b_client,
-                        "BOX_GATEWAY": self.ip4_b_firewall,
+                        "BOX_IP": str(self.ip4_b_client),
+                        "BOX_GATEWAY": str(self.ip4_b_firewall),
                         "UDP_SERVERS": addresses_list((self.ip4_b_client, 3001)),
                         "TCP_SERVERS": addresses_list((self.ip4_b_client, 3002)),
                         "HTTP_SERVERS": addresses_list((self.ip4_b_client, 3003)),
@@ -228,7 +225,7 @@ class FirewallVariant:
                     },
                     add_gateway=False,
                     add_socket_volume=True,
-                ),
+                )
             ], {0: "/out/check.log"}),
             "forward_a_to_b": Check([
                 make_checker_meta(
@@ -241,7 +238,7 @@ class FirewallVariant:
                         "TCP_VALID_ADDRESSES": addresses_list((self.ip4_b_client, 3002)),
                     },
                     add_socket_volume=True,
-                ),
+                )
             ], {0: "/out/check.log"}),
             "forward_b_to_a": Check([
                 make_checker_meta(
@@ -253,7 +250,7 @@ class FirewallVariant:
                         "UDP_VALID_ADDRESSES": addresses_list((self.ip4_a_client, 3001)),
                     },
                     add_socket_volume=True,
-                ),
+                )
             ], {0: "/out/check.log"}),
             "tcp_unidirectional": Check([
                 make_checker_meta(
@@ -276,7 +273,7 @@ class FirewallVariant:
                         "TCP_INVALID_ADDRESSES": addresses_list((self.ip4_a_client, 3002), (self.ip4_a_client2, 3333)),
                     },
                     add_socket_volume=True,
-                ),
+                )
             ], {0: "/out/check.log", 1: "/out/check.log"}, self.check_tcp_unidirectional),
             "udp_ports": Check([
                 make_checker_meta(
@@ -311,7 +308,7 @@ class FirewallVariant:
                         "HIDE_REQUEST_SOURCE": "true",
                     },
                     volumes=util.socket_volume()
-                ),
+                )
             ], {0: "/out/check.log", 1: "/out/check.log", 2: "/out/check.log"}, self.check_udp_ports,
                 logs_joiner=lambda container_logs: f"=== from network B:\n{container_logs[1]}\n"
                                                    f"=== from network A:\n{container_logs[0]}\n"
@@ -327,7 +324,7 @@ class FirewallVariant:
                         "BAD_WORD": self.tcp_bad_word,
                     },
                     add_socket_volume=True,
-                ),
+                )
             ], {0: "/out/check.log"}),
             "forward_nat": Check([
                 make_checker_meta(
@@ -348,7 +345,7 @@ class FirewallVariant:
                         "NAT_IP": str(self.ip4_a_firewall),
                         "UDP_VALID_ADDRESSES": addresses_list((self.ip4_a_client, 3001)),
                     },
-                ),
+                )
             ], {0: "/out/check.log", 1: "/out/check.log"}, self.check_forward_nat),
             "icmp_config": Check([
                 make_checker_meta(
@@ -358,10 +355,10 @@ class FirewallVariant:
                     task="icmp_config",
                     environment={
                         "PING_VALID_IPS": str(self.ip4_a_client),
-                        "PING_EXPECTED_TTL": self.icmp_ttl,
+                        "PING_EXPECTED_TTL": str(self.icmp_ttl),
                     },
                     add_socket_volume=True,
-                ),
+                )
             ], {0: "/out/check.log"}),
             "http_access": Check([
                 make_checker_meta(
@@ -375,25 +372,26 @@ class FirewallVariant:
                         "SECRET_SEED": str(SECRET_SEED),
                     },
                     add_socket_volume=True,
-                ),
+                )
             ], {0: "/out/check.log"}),
         }
 
 
-class FirewallChapter(CheckableMixin, DockerMixin, FormMixin, BaseChapter[FirewallVariant]):
+class FirewallChapter(CheckableMixin, DockerMixin, BaseChapter[FirewallVariant]):
     slug = "firewall"
-    name = "Firewall"
-    deadline = datetime(2023, 6, 5, 21, 0, 0)
+    name = "Файрвол"
+    deadline = datetime(2023, 6, 20, 21, 0, 0)
+    private = True
     tasks = [
         ChapterTask("setup", "Устройство в двух сетях", Decimal(1)),
-        ChapterTask("forward_a_to_b", "Forwarding из A в B", Decimal(1)),
-        ChapterTask("forward_b_to_a", "Forwarding из B в A", Decimal(1)),
-        ChapterTask("tcp_unidirectional", "TCP только из A в B", Decimal(1)),
+        ChapterTask("forward_a_to_b", "Форвардинг из A в B", Decimal(1)),
+        ChapterTask("forward_b_to_a", "Форвардинг из B в A", Decimal(1)),
+        ChapterTask("tcp_unidirectional", "TCP только из A в B", Decimal(2)),
         ChapterTask("udp_ports", "Ограничение UDP", Decimal(1)),
         ChapterTask("tcp_body_filter", "Фильтр содержимого", Decimal(1)),
-        ChapterTask("forward_nat", "Forwarding с NAT", Decimal(1)),
-        ChapterTask("icmp_config", "Настройка ICMP", Decimal(1)),
-        ChapterTask("http_access", "Http доступ", Decimal(1)),
+        ChapterTask("forward_nat", "NAT", Decimal(1)),
+        ChapterTask("icmp_config", "Настройка ICMP", Decimal(2)),
+        ChapterTask("http_access", "HTTP-доступ", Decimal(2))
     ]
 
     @util.scope_cached("variant")
