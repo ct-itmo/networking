@@ -380,6 +380,7 @@ class FirewallVariant:
 class FirewallChapter(CheckableMixin, DockerMixin, BaseChapter[FirewallVariant]):
     slug = "firewall"
     name = "Файрвол"
+    author = "Константин Бац"
     deadline = datetime(2023, 6, 20, 21, 0, 0)
     private = True
     tasks = [

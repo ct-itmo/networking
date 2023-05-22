@@ -63,6 +63,7 @@ class ChapterResult:
 class BaseChapter(Generic[Variant]):
     slug: str
     name: str
+    author: str | None
     deadline: datetime | None
     hard_deadline: bool = False
     private: bool = False

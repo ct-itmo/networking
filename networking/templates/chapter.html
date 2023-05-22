@@ -9,6 +9,9 @@
     <p class="meta">
         <span>Чекпоинты: {{ chapter.solved_tasks }} из {{ chapter.total_tasks }}</span>
         <span>Баллы: {{ chapter.score }} из {{ chapter.total_score }}</span>
+        {% if chapter.chapter.author %}
+        <span>Автор: {{ chapter.chapter.author }}</span>
+        {% endif %}
     </p>
 
     {% include "util/vpn.html" %}
