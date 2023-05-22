@@ -15,20 +15,25 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	startUDPServer(os.Getenv("BOX_IP") + ":3001")
-	for _, addr := range strings.Split(os.Getenv("OTHER_UDP_SERVER"), ",") {
+	for _, addr := range strings.Split(os.Getenv("UDP_SERVERS"), ",") {
 		if addr == "" {
 			continue
 		}
 		startUDPServer(addr)
 	}
 
-	startTCPServer(os.Getenv("BOX_IP") + ":3002")
-	for _, addr := range strings.Split(os.Getenv("OTHER_TCP_SERVER"), ",") {
+	for _, addr := range strings.Split(os.Getenv("TCP_SERVERS"), ",") {
 		if addr == "" {
 			continue
 		}
 		startTCPServer(addr)
+	}
+
+	for _, addr := range strings.Split(os.Getenv("HTTP_SERVERS"), ",") {
+		if addr == "" {
+			continue
+		}
+		startHTTPServer(addr)
 	}
 
 	if os.Getenv("TIMEOUT") != "" {

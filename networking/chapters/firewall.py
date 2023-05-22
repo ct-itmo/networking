@@ -190,7 +190,8 @@ class FirewallVariant:
                         "BOX_IP": self.ip4_a_client,
                         "BOX_IP2": self.ip4_a_client2,
                         "BOX_GATEWAY": self.ip4_a_firewall,
-                        "OTHER_TCP_SERVER": str(self.ip4_a_client2) + ":3333",
+                        "UDP_SERVERS": addresses_list((self.ip4_a_client, 3001)),
+                        "TCP_SERVERS": addresses_list((self.ip4_a_client, 3002), (self.ip4_a_client2, 3333)),
                     },
                     volumes=util.socket_volume()
                 ),
@@ -201,6 +202,9 @@ class FirewallVariant:
                     environment={
                         "BOX_IP": self.ip4_b_client,
                         "BOX_GATEWAY": self.ip4_b_firewall,
+                        "UDP_SERVERS": addresses_list((self.ip4_b_client, 3001)),
+                        "TCP_SERVERS": addresses_list((self.ip4_b_client, 3002)),
+                        "HTTP_SERVERS": addresses_list((self.ip4_b_client, 3003)),
                     },
                     volumes=util.socket_volume()
                 ),
@@ -303,7 +307,7 @@ class FirewallVariant:
                         "BOX_IP": str(self.ip4_b_client2),
                         "BOX_GATEWAY": str(self.ip4_b_firewall),
                         "TIMEOUT": "10s",
-                        "OTHER_UDP_SERVER": udp_ports_client_listen,
+                        "UDP_SERVERS": addresses_list((self.ip4_b_client2, 3001)) + "," + udp_ports_client_listen,
                         "HIDE_REQUEST_SOURCE": "true",
                     },
                     volumes=util.socket_volume()
@@ -365,8 +369,8 @@ class FirewallVariant:
                     network_type="A",
                     check_mode="http_access",
                     task="http_access",
-                    environment={ # TODO: start http in network B
-                        "HTTP_VALID_URLS": str(EXTERNAL_BASE_URL),
+                    environment={
+                        "HTTP_VALID_URLS": str(EXTERNAL_BASE_URL)+ f",http://{self.ip4_b_client}:3003",
                         "HTTP_INVALID_URLS": "https://ya.ru,http://vk.com,http://google.com,https://8.8.8.8",
                         "SECRET_SEED": str(SECRET_SEED),
                     },
