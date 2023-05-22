@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-ping/ping"
+	probing "github.com/prometheus-community/pro-bing"
 )
 
 func logPingResult(ip string, pingResult bool, pingErr error, expecredResult bool) {
@@ -135,7 +135,7 @@ func checkICMPConfig() bool {
 		return false
 	}
 
-	pinger, err := ping.NewPinger(host)
+	pinger, err := probing.NewPinger(host)
 	if err != nil {
 		fmt.Printf("Invalid host %s: %v\n", host, err)
 		return false
@@ -147,9 +147,9 @@ func checkICMPConfig() bool {
 	// pinger.SetPrivileged(true)
 
 	ttlOk := true
-	pinger.OnRecv = func(p *ping.Packet) {
-		if ttlOk && p.Ttl != expectedTTL {
-			fmt.Printf("Received ICMP with TTL %d, but excepted %d\n", p.Ttl, expectedTTL)
+	pinger.OnRecv = func(p *probing.Packet) {
+		if ttlOk && p.TTL != expectedTTL {
+			fmt.Printf("Received ICMP with TTL %d, but excepted %d\n", p.TTL, expectedTTL)
 			ttlOk = false
 		}
 	}

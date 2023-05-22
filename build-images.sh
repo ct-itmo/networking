@@ -14,4 +14,3 @@ docker build -t ct-itmo/labs-networking-dhcpd-bot $BASE/networking/images/dhcpd-
 docker build -t ct-itmo/labs-networking-dns-bot $BASE/networking/images/dns-bot
 docker build -t ct-itmo/labs-networking-firewall-checker $BASE/networking/images/firewall-checker
 docker build -t ct-itmo/labs-networking-firewall-client $BASE/networking/images/firewall-client
-

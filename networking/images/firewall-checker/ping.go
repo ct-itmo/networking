@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-ping/ping"
+	probing "github.com/prometheus-community/pro-bing"
 )
 
 const countOfPackages = 3
 
 func checkPing(host string) (bool, error) {
-	pinger, err := ping.NewPinger(host)
+	pinger, err := probing.NewPinger(host)
 	if err != nil {
 		fmt.Printf("Invalid host %s: %v\n", host, err)
 		return false, err
