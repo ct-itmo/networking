@@ -382,7 +382,6 @@ class FirewallChapter(CheckableMixin, DockerMixin, BaseChapter[FirewallVariant])
     name = "Файрвол"
     author = "Константин Бац"
     deadline = datetime(2023, 6, 20, 21, 0, 0)
-    private = True
     tasks = [
         ChapterTask("setup", "Устройство в двух сетях", Decimal(1)),
         ChapterTask("forward_a_to_b", "Форвардинг из A в B", Decimal(1)),
