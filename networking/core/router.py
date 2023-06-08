@@ -15,7 +15,7 @@ from quirck.auth.middleware import AuthenticationMiddleware
 from quirck.auth.model import User
 from quirck.core import config
 from quirck.core.s3 import get_url
-from quirck.web.template import TemplateResponse
+from quirck.web.template import TemplateResponse, template_env
 
 from networking.chapters import chapters
 from networking.core.chapter.base import ChapterResult
