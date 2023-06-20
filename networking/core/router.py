@@ -19,8 +19,8 @@ from quirck.web.template import TemplateResponse, template_env
 
 from networking.chapters import chapters
 from networking.core.chapter.base import ChapterResult
-from networking.core.middleware import LoadDockerMetaMiddleware
-from networking.core.model import Attempt
+from networking.core.middleware import LoadMetaMiddleware
+from networking.core.model import Attempt, Exam
 from networking.core.config import SECRET_SEED
 
 
@@ -43,16 +43,21 @@ async def main_page(request: Request) -> Response:
         if not chapter.private
     ]
 
-    overall_score = sum((chapter.score for chapter in user_chapters), Decimal(0))
-    total_score = sum((chapter.total_score for chapter in user_chapters), Decimal(0))
+    overall_chapter_score = sum((chapter.score for chapter in user_chapters), Decimal(0))
+    total_chapter_score = sum((chapter.total_score for chapter in user_chapters), Decimal(0))
+
+    exam: Exam | None = user.exam  # type: ignore
+
+    overall_score = overall_chapter_score if exam is None else exam.calculate_points(overall_chapter_score)
 
     return TemplateResponse(
         request,
         "main.html",
         {
             "chapters": user_chapters,
-            "overall_score": overall_score,
-            "total_score": total_score
+            "overall_chapter_score": overall_chapter_score,
+            "total_chapter_score": total_chapter_score,
+            "overall_score": overall_score
         }
     )
 
@@ -147,7 +152,7 @@ def get_user_mount():
         ],
         middleware=[
             Middleware(AuthenticationMiddleware),
-            Middleware(LoadDockerMetaMiddleware)
+            Middleware(LoadMetaMiddleware)
         ],
         name="networking"
     )

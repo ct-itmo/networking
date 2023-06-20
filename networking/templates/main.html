@@ -12,11 +12,13 @@
 </p>
 {% endif %}
 
+<p>Вы набрали {{ overall_score }} балл{{ overall_score|ending("", "а", "ов") }}.</p>
+
 <h3>Домашние задания</h3>
 
 <p><a href="{{ url_for("networking:vpn:setup") }}">Настройка VPN</a></p>
 
-<p>Вы набрали {{ overall_score }} из {{ total_score }} балл{{ total_score|ending("а", "ов", "ов") }}.</p>
+<p>Вы набрали {{ overall_chapter_score }} из {{ total_chapter_score }} балл{{ total_chapter_score|ending("а", "ов", "ов") }}.</p>
 
 <div class="chapter-table">
     {% for chapter in chapters -%}
@@ -71,7 +73,10 @@
 </p>
 
 <p>
-    <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_8gd-kNUe8g1RsO9YmO0j67qYSVLwvxxCJCc5AOv7-IUgQW-pau39A8_FDwFxfWKdEWDpZp6TrWFv/pubhtml?gid=564398992&single=true">Результаты теста</a>
+    {% if user.exam is not none %}
+    Вы набрали {{ user.exam.test_points }} балл{{ user.exam.test_points|ending("", "а", "ов") }}.
+    {% endif %}
+    <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_8gd-kNUe8g1RsO9YmO0j67qYSVLwvxxCJCc5AOv7-IUgQW-pau39A8_FDwFxfWKdEWDpZp6TrWFv/pubhtml?gid=564398992&single=true">Все результаты теста</a>
 </p>
 
 <p>
@@ -83,9 +88,34 @@
 
 <p>
     Устный экзамен будет проведён онлайн 21 июня в 11:00.
-    Расписание сдачи будет опубликовано в канале курса.
-    Номер вашего билета появится за 15 минут до времени сдачи.
 </p>
+
+{% if user.exam is not none and user.exam.ticket is not none %}
+{% if user.exam.final_points %}
+<p>
+    Вы набрали {{ user.exam.final_points }} баллов.
+</p>
+{% elif user.exam.ticket_time is none %}
+<p>
+    <strong>Что-то пошло не так. Сообщите в чат курса.</strong>
+</p>
+{% elif now() >= user.exam.ticket_time %}
+<p>
+    Ваш билет — <strong>{{ user.exam.ticket }}</strong>. Через 15 минут после выдачи
+    (или чуть позже) мы пригласим вас в комнату в Zoom для ответа. Не забудьте поменять
+    ваше имя в Zoom на настоящее, чтобы мы вас нашли.
+</p>
+{% else %}
+<p>
+    Вы увидите ваш номер вашего билета на этом месте в <strong>{{ user.exam.ticket_time|moscowtime }}</strong>.
+    После этого у вас будет 15 минут на подготовку.
+</p>
+{% endif %}
+{% else %}
+<p>
+    Вы не записаны на устный экзамен. Если вы считаете, что это — ошибка, напишите в чат курса.
+</p>
+{% endif %}
 
 <p>
     Вам будет необходимо рассказать полученный билет, а также ответить на дополнительные вопросы (как по вашему билету,

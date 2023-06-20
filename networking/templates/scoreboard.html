@@ -11,6 +11,8 @@
             <th rowspan="2">ID</th>
             <th rowspan="2">Студент</th>
             <th rowspan="2">Баллы</th>
+            <th rowspan="2">Тест</th>
+            <th rowspan="2">Экз</th>
             {%- for chapter in chapters %}
             <th colspan="{{ chapter.tasks|length }}">{{ chapter.slug }}</th>
             {%- endfor %}
@@ -24,12 +26,15 @@
         </tr>
     </thead>
     <tbody>
-        {%- for user in users %}
+        {%- for user_meta in users %}
+        {%- set user = user_meta.user %}
         <tr>
-            <td>{{ user.user.id }}</td>
-            <td>{{ user.user.name }}</td>
-            <td>{{ user.score }}</td>
-            {%- for chapter in user.chapters %}
+            <td>{{ user.id }}</td>
+            <td>{{ user.name }}</td>
+            <td>{% if user.exam is none %}{{ user_meta.score }}{% else %}{{ user.exam.calculate_points(user_meta.score) }}{% endif %}</td>
+            <td>{% if user.exam is not none %}{{ user.exam.test_points }}{% endif %}</td>
+            <td>{% if user.exam is not none %}{{ user.exam.final_points or "" }}{% endif %}</td>
+            {%- for chapter in user_meta.chapters %}
             {%- for result in chapter.results %}
             <td>
                 {%- if result.score -%}
