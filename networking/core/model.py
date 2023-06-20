@@ -90,9 +90,9 @@ class Exam(Base):
         if self.final_points is not None:
             return self.final_points
         if self.has_debt:
-            return min(self.test_points or 0 + chapter_points, Decimal(74))
+            return min((self.test_points or 0) + chapter_points, Decimal(74))
         else:
-            return min(self.test_points or 0 + chapter_points, Decimal(90))
+            return min((self.test_points or 0) + chapter_points, Decimal(90))
 
 
 User.attempts = relationship("Attempt", back_populates="user")

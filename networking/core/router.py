@@ -5,6 +5,7 @@ from hashlib import sha256
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 from starlette.exceptions import HTTPException
 from starlette.middleware import Middleware
 from starlette.requests import Request
@@ -80,7 +81,9 @@ async def scoreboard(request: Request) -> Response:
     session: AsyncSession = request.scope["db"]
 
     users = (await session.scalars(
-        select(User).order_by(User.id)
+        select(User).order_by(User.id).options(joinedload(
+            User.exam  # type: ignore
+        ))
     )).all()
 
     attempts = (await session.scalars(
