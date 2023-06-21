@@ -22,7 +22,7 @@ from networking.chapters import chapters
 from networking.core.chapter.base import ChapterResult
 from networking.core.middleware import LoadMetaMiddleware
 from networking.core.model import Attempt, Exam
-from networking.core.config import SECRET_SEED
+from networking.core.config import SECRET_SEED, SCOREBOARD_TOKEN
 
 
 async def main_page(request: Request) -> Response:
@@ -73,11 +73,22 @@ class UserScore:
         return sum((chapter.score for chapter in self.chapters), Decimal(0))
 
 
-async def scoreboard(request: Request) -> Response:
+async def scoreboard_guest(request: Request) -> Response:
+    if SCOREBOARD_TOKEN is None or request.query_params.get("token") != str(SCOREBOARD_TOKEN):
+        raise HTTPException(403)
+
+    return await scoreboard(request)
+
+
+async def scoreboard_admin(request: Request) -> Response:
     user: User = request.scope["user"]
     if not user.is_admin:
         raise HTTPException(403)
+    
+    return await scoreboard(request)
 
+
+async def scoreboard(request: Request) -> Response:
     session: AsyncSession = request.scope["db"]
 
     users = (await session.scalars(
@@ -139,7 +150,7 @@ def get_user_mount():
         path="/",
         routes=[
             Route("/", main_page, name="main"),
-            Route("/scoreboard", scoreboard, name="scoreboard"),
+            Route("/scoreboard", scoreboard_admin, name="scoreboard"),
             Mount(
                 "/vpn",
                 routes=[
@@ -177,6 +188,7 @@ def get_mount():
     return Mount(
         path="/",
         routes=[
+            Route("/scoreboard/guest", scoreboard_guest, name="scoreboard_guest"),
             Route("/api/signature", api_signature, name="signature"),
             get_user_mount(),
         ]
