@@ -14,8 +14,7 @@ from starlette.routing import Mount, Route
 
 from quirck.auth.middleware import AuthenticationMiddleware
 from quirck.auth.model import User
-from quirck.core import config
-from quirck.core.s3 import get_url
+from quirck.core import s3
 from quirck.web.template import TemplateResponse, template_env
 
 from networking.chapters import chapters
@@ -135,13 +134,13 @@ async def setup_page(request: Request) -> Response:
 # TODO: common route for files
 async def vpn_linux(request: Request) -> Response:
     return RedirectResponse(
-        await get_url(config.S3_DEFAULT_BUCKET, "vpn", request.scope["user"].id, "config-linux.ovpn")
+        await s3.get_url(s3.S3_DEFAULT_BUCKET, "vpn", request.scope["user"].id, "config-linux.ovpn")
     )
 
 
 async def vpn_win(request: Request) -> Response:
     return RedirectResponse(
-        await get_url(config.S3_DEFAULT_BUCKET, "vpn", request.scope["user"].id, "config-win.ovpn")
+        await s3.get_url(s3.S3_DEFAULT_BUCKET, "vpn", request.scope["user"].id, "config-win.ovpn")
     )
 
 
