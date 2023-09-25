@@ -96,10 +96,8 @@ async def scoreboard(request: Request) -> Response:
         ))
     )).all()
 
-    import datetime
     attempts = (await session.scalars(
         select(Attempt).order_by(Attempt.user_id, Attempt.chapter, Attempt.task, Attempt.submitted.desc())
-        .where(Attempt.submitted < datetime.datetime(2023, 7, 1, 0, 0, 0))
     )).all()
 
     grouped_attempts = {
