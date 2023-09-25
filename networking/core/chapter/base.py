@@ -172,7 +172,10 @@ class BaseChapter(Generic[Variant]):
 
                 return RedirectResponse(f"{request.url_for(f'networking:{self.slug}:page')}#report", status_code=303)
 
-        chapter_result = self.calculate_score(attempts)
+        chapter_result = self.calculate_score(
+            attempts,
+            False if user.exam is None else user.exam.has_debt  # type: ignore
+        )
 
         context.update(
             report=report_form,
