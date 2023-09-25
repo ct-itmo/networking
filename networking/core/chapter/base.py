@@ -84,7 +84,7 @@ class BaseChapter(Generic[Variant]):
             name=self.slug
         )
 
-    def calculate_task_score(self, task: ChapterTask, attempts: list[Attempt]) -> ChapterTaskResult:
+    def calculate_task_score(self, task: ChapterTask, attempts: list[Attempt], with_debt: bool) -> ChapterTaskResult:
         is_solved = False
         score: Decimal | None = None
 
@@ -103,7 +103,8 @@ class BaseChapter(Generic[Variant]):
                     if self.hard_deadline:
                         continue
                 
-                    attempt_score *= Decimal('0.75')
+                    if not with_debt:
+                        attempt_score *= Decimal('0.75')
                 
                 if score is None:
                     score = attempt_score
@@ -112,12 +113,12 @@ class BaseChapter(Generic[Variant]):
 
         return ChapterTaskResult(task, is_solved, score)
 
-    def calculate_score(self, attempts: Sequence[Attempt]) -> ChapterResult:
+    def calculate_score(self, attempts: Sequence[Attempt], with_debt: bool = False) -> ChapterResult:
         chapter_attempts = sorted((attempt for attempt in attempts if attempt.chapter == self.slug), key=lambda attempt: attempt.task)
         grouped_attempts = {key: list(value) for key, value in itertools.groupby(chapter_attempts, key=lambda attempt: attempt.task)}
 
         scores = [
-            self.calculate_task_score(task, grouped_attempts.get(task.slug, []))
+            self.calculate_task_score(task, grouped_attempts.get(task.slug, []), with_debt)
             for task in self.tasks
         ]
 

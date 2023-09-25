@@ -34,19 +34,19 @@ async def main_page(request: Request) -> Response:
             .order_by(Attempt.chapter, Attempt.task, Attempt.submitted.desc())
     )).all()
 
+    exam: Exam | None = user.exam  # type: ignore
+
     user_chapters = [
-        chapter.calculate_score([
-            attempt for attempt in attempts
-            if attempt.chapter == chapter.slug
-        ])
+        chapter.calculate_score(
+            [attempt for attempt in attempts if attempt.chapter == chapter.slug],
+            False if exam is None else exam.has_debt
+        )
         for chapter in chapters
         if not chapter.private
     ]
 
     overall_chapter_score = sum((chapter.score for chapter in user_chapters), Decimal(0))
     total_chapter_score = sum((chapter.total_score for chapter in user_chapters), Decimal(0))
-
-    exam: Exam | None = user.exam  # type: ignore
 
     overall_score = overall_chapter_score if exam is None else exam.calculate_points(overall_chapter_score)
 
@@ -96,8 +96,10 @@ async def scoreboard(request: Request) -> Response:
         ))
     )).all()
 
+    import datetime
     attempts = (await session.scalars(
         select(Attempt).order_by(Attempt.user_id, Attempt.chapter, Attempt.task, Attempt.submitted.desc())
+        .where(Attempt.submitted < datetime.datetime(2023, 7, 1, 0, 0, 0))
     )).all()
 
     grouped_attempts = {
@@ -110,7 +112,10 @@ async def scoreboard(request: Request) -> Response:
 
     users_with_chapters = [
         UserScore(user, [
-            chapter.calculate_score(grouped_attempts.get(user.id, {}).get(chapter.slug, []))
+            chapter.calculate_score(
+                grouped_attempts.get(user.id, {}).get(chapter.slug, []),
+                False if user.exam is None else user.exam.has_debt  # type: ignore
+            )
             for chapter in chapters
         ])
         for user in users
