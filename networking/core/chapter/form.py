@@ -1,15 +1,52 @@
+import re
+from dataclasses import dataclass
 from typing import Any, Protocol
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
+from wtforms.fields import StringField
+from wtforms.validators import DataRequired
 
 from quirck.auth.model import User
-from quirck.core.form import BaseTaskForm
+from quirck.core.form import QuirckForm
 
 from networking.core.chapter.base import BaseChapter
 from networking.core.model import Attempt
-from networking.core.util import scope_cached
+
+
+@dataclass
+class ParsedAttempt:
+    task: str
+    is_correct: bool
+
+
+class BaseTaskForm(QuirckForm):
+    async def parse(self) -> list[ParsedAttempt]:
+        raise NotImplementedError(f"{self.__class__.__name__} does not implement parse()")
+
+    @classmethod
+    def make_task(cls, slug: str, **kwargs) -> type["BaseTaskForm"]:
+        return type(slug, (cls, ), kwargs)
+
+
+class SingleTaskForm(BaseTaskForm):
+    async def check(self) -> bool:
+        raise NotImplementedError(f"{self.__class__.__name__} does not implement check()")
+
+    async def parse(self) -> list[ParsedAttempt]:
+        return [ParsedAttempt(
+            task=self.__class__.__name__,
+            is_correct=await self.check()
+        )]
+
+
+class RegexpForm(SingleTaskForm):
+    value = StringField(label="", validators=[DataRequired()])
+    answer: re.Pattern
+
+    async def check(self) -> bool:
+        return self.answer.fullmatch(self.value.data.strip()) is not None
 
 
 class FormTaskProtocol(Protocol):
@@ -40,18 +77,20 @@ class FormMixin(BaseChapter[FormTaskProtocol]):
                         if key not in ["submit", "csrf_token"]
                     }
 
-                    is_correct = await form.check()
+                    attempts = [
+                        Attempt(
+                            user_id=user.id,
+                            chapter=self.slug,
+                            task=attempt.task,
+                            data=form_data,
+                            is_correct=attempt.is_correct
+                        )
+                        for attempt in await form.parse()
+                    ]
 
-                    attempt = Attempt(
-                        user_id=user.id,
-                        chapter=self.slug,
-                        task=name,
-                        data=form_data,
-                        is_correct=await form.check()
-                    )
-                    session.add(attempt)
+                    session.add_all(attempts)
 
-                    if is_correct:
+                    if any(attempt.is_correct for attempt in attempts):
                         return RedirectResponse(f"{request.url_for(f'networking:{self.slug}:page')}#{name}", status_code=303)
                     else:
                         form.form_errors.append("Неправильный ответ")
@@ -63,4 +102,4 @@ class FormMixin(BaseChapter[FormTaskProtocol]):
         return await super().chapter_page(request, context)
 
 
-__all__ = ["FormMixin"]
+__all__ = ["FormMixin", "BaseTaskForm", "RegexpForm"]

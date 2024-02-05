@@ -11,13 +11,12 @@ from starlette.requests import Request
 
 from quirck.box.meta import Deployment, ContainerMeta, NetworkMeta
 from quirck.box.model import DockerMeta
-from quirck.core.form import BaseTaskForm, RegexpForm
 
 from networking.core import util
 from networking.core.chapter.base import BaseChapter, ChapterTask
 from networking.core.chapter.check import Check, CheckableMixin
 from networking.core.chapter.docker import DockerMixin
-from networking.core.chapter.form import FormMixin
+from networking.core.chapter.form import FormMixin, BaseTaskForm, RegexpForm
 from networking.core.config import SECRET_SEED
 from networking.core.model import Attempt
 
