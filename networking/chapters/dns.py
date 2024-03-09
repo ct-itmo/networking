@@ -108,13 +108,13 @@ class DNSChapter(CheckableMixin, DockerMixin, FormMixin, BaseChapter[DNSVariant]
     name = "Протокол DNS"
     deadline = datetime(2023, 6, 20, 21, 0, 0)
     tasks = [
-        ChapterTask("ip", "IP-адрес", Decimal(1.5)),
-        ChapterTask("servers", "Список серверов", Decimal(3)),
-        ChapterTask("recursive", "Рекурсивный сервер", Decimal(3)),
-        ChapterTask("authoritative", "Авторитетный сервер", Decimal(1.5)),
-        ChapterTask("mail", "Почта", Decimal(1.5)),
-        ChapterTask("subdomain", "Поддомен", Decimal(3)),
-        ChapterTask("transfer", "Трансфер", Decimal(3))
+        ChapterTask("ip", "IP-адрес", Decimal(1)),
+        ChapterTask("servers", "Список серверов", Decimal(2)),
+        ChapterTask("recursive", "Рекурсивный сервер", Decimal(2)),
+        ChapterTask("authoritative", "Авторитетный сервер", Decimal(1)),
+        ChapterTask("mail", "Почта", Decimal(1)),
+        ChapterTask("subdomain", "Поддомен", Decimal(2)),
+        ChapterTask("transfer", "Трансфер", Decimal(2))
     ]
 
     @util.scope_cached("variant")

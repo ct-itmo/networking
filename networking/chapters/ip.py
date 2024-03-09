@@ -108,13 +108,13 @@ class IPChapter(DockerMixin, FormMixin, BaseChapter[IPVariant]):
     name = "Протокол IP"
     deadline = datetime(2023, 4, 26, 21, 0, 0)
     tasks = [
-        ChapterTask("netcalc", "Локальные сети", Decimal(1.5)),
-        ChapterTask("ping4", "Пинг!", Decimal(1.5)),
-        ChapterTask("mac4", "MAC-адрес", Decimal(3)),
-        ChapterTask("ping_ll", "Link-local", Decimal(3)),
-        ChapterTask("ping6", "IPv6-пинг", Decimal(1.5)),
-        ChapterTask("mac6", "MAC-адрес (v6)", Decimal(1.5)),
-        ChapterTask("mtu", "MTU", Decimal(4.5))
+        ChapterTask("netcalc", "Локальные сети", Decimal(1)),
+        ChapterTask("ping4", "Пинг!", Decimal(1)),
+        ChapterTask("mac4", "MAC-адрес", Decimal(2)),
+        ChapterTask("ping_ll", "Link-local", Decimal(2)),
+        ChapterTask("ping6", "IPv6-пинг", Decimal(1)),
+        ChapterTask("mac6", "MAC-адрес (v6)", Decimal(1)),
+        ChapterTask("mtu", "MTU", Decimal(3))
     ]
 
     @util.scope_cached("variant")

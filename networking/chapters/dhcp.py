@@ -152,13 +152,13 @@ class DHCPChapter(DockerMixin, FormMixin, BaseChapter[DHCPVariant]):
     name = "DHCP-клиент"
     deadline = datetime(2023, 5, 24, 21, 0, 0)
     tasks = [
-        ChapterTask("ip4", "Получите IPv4-адрес", Decimal(1.5)),
-        ChapterTask("net", "Адрес и маска сети", Decimal(1.5)),
-        ChapterTask("domain", "Домен сети", Decimal(3)),
-        ChapterTask("slaac", "Получите SLAAC-адрес", Decimal(1.5)),
-        ChapterTask("ip6", "Получите адрес по DHCPv6", Decimal(1.5)),
-        ChapterTask("dns", "Адрес сайта", Decimal(1.5)),
-        ChapterTask("web", "Кнопка", Decimal(3))
+        ChapterTask("ip4", "Получите IPv4-адрес", Decimal(1)),
+        ChapterTask("net", "Адрес и маска сети", Decimal(1)),
+        ChapterTask("domain", "Домен сети", Decimal(2)),
+        ChapterTask("slaac", "Получите SLAAC-адрес", Decimal(1)),
+        ChapterTask("ip6", "Получите адрес по DHCPv6", Decimal(1)),
+        ChapterTask("dns", "Адрес сайта", Decimal(1)),
+        ChapterTask("web", "Кнопка", Decimal(2))
     ]
 
     @util.scope_cached("variant")
