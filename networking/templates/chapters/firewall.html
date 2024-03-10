@@ -11,7 +11,7 @@
         <input type="hidden" name="check" value="{{ task_name }}" />
         <p><button>Проверить</button></p>
     </form>
-{% elif meta is not none and meta.chapter != chapter.slug %}
+{% elif meta is none or meta.chapter != chapter.slug %}
     <p>Чтобы запустить проверку, активируйте задание.</p>
 {% else %}
     <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>

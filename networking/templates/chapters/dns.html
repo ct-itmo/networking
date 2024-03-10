@@ -151,7 +151,7 @@
 
 <h3>Проверка решения</h3>
 {% set meta = user.docker_meta %}
-{% if meta.state.name == 'READY' and meta.chapter == chapter.slug %}
+{% if meta is not none and meta.state.name == 'READY' and meta.chapter == chapter.slug %}
     <p>
         Все задания проверяются «сверху вниз» — очередное задание будет проверено, только если на момент проверки работают все предыдущие.
     </p>
@@ -159,7 +159,7 @@
         <input type="hidden" name="check" value="dns" />
         <p><button>Проверить</button></p>
     </form>
-{% elif meta.chapter != chapter.slug %}
+{% elif meta is none or meta.chapter != chapter.slug %}
     <p>Чтобы запустить проверку, активируйте задание.</p>
 {% else %}
     <p>Сейчас идёт активация или проверка задания. Пожалуйста, подождите.</p>
