@@ -12,11 +12,11 @@ from quirck.box.meta import Deployment, ContainerMeta, NetworkMeta
 from networking.core import util
 from networking.core.chapter.base import BaseChapter, ChapterTask
 from networking.core.chapter.docker import DockerMixin
-from networking.core.chapter.form import FormMixin, BaseTaskForm, RegexpForm
+from networking.core.chapter.form import FormMixin, BaseTaskForm, RegexpForm, SingleTaskForm
 from networking.core.config import SECRET_SEED
 
 
-class NetcalcForm(BaseTaskForm):
+class NetcalcForm(SingleTaskForm):
     first = BooleanField("<code>192.168.77.5/24</code> и <code>192.168.77.6/29</code>")
     second = BooleanField("<code>172.19.21.5/23</code> и <code>172.19.20.199/24</code>")
 
