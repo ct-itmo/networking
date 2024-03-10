@@ -8,7 +8,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.10"
 quirck = {path = "quirck", develop = true}
-netaddr = "^0.10.1"
+netaddr = "^1.2.1"
 
 
 [build-system]
