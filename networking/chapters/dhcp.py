@@ -150,7 +150,7 @@ class DHCPVariant:
 class DHCPChapter(DockerMixin, FormMixin, BaseChapter[DHCPVariant]):
     slug = "dhcp"
     name = "DHCP-клиент"
-    deadline = datetime(2024, 4, 12, 21, 0, 0)
+    deadline = datetime(2024, 4, 13, 21, 0, 0)
     tasks = [
         ChapterTask("ip4", "Получите IPv4-адрес", Decimal(1)),
         ChapterTask("net", "Адрес и маска сети", Decimal(1)),
