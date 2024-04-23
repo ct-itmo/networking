@@ -142,7 +142,7 @@ impl <'u> UdpChecker<'u> {
     pub async fn check_recursive(&mut self) -> Result<(), Error> {
         let test1 = FullMatchTest::new(
             Query::new("example.com.", RecordType::A)?,
-            BTreeSet::from([RData::A(Ipv4Addr::new(93, 184, 216, 34))])
+            BTreeSet::from([RData::A(Ipv4Addr::new(93, 184, 215, 14))])
         );
         test1.check(&mut self.udp_client).await?;
 
