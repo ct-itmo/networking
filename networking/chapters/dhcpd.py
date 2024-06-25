@@ -40,12 +40,12 @@ class DHCPDVariant:
         extracted = tar.extractfile("addresses")
         if extracted is None:
             return
-            
+
         try:
             addresses = extracted.read().decode().split()
         except UnicodeDecodeError:
             return
-        
+
         extracted.close()
 
         for address in addresses:
@@ -73,7 +73,7 @@ class DHCPDVariant:
                     is_correct=True
                 )
                 session.add(attempt)
-        
+
         await session.commit()
 
     def __init__(self, user_id: int):
@@ -113,8 +113,8 @@ class DHCPDChapter(CheckableMixin, DockerMixin, FormMixin, BaseChapter[DHCPDVari
     name = "DHCP-сервер"
     deadline = datetime(2024, 4, 19, 21, 0, 0)
     tasks = [
-        ChapterTask("ip4", "Выдайте IPv4-адрес", Decimal(4)),
-        ChapterTask("ip6", "Настройте SLAAC", Decimal(4)),
+        ChapterTask("ip4", "Выдайте IPv4-адрес", Decimal(5)),
+        ChapterTask("ip6", "Настройте SLAAC", Decimal(5)),
         ChapterTask("mac", "MAC-адрес", Decimal(1))
     ]
 

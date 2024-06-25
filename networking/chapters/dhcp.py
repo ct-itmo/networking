@@ -39,7 +39,7 @@ NOUNS = [
     "affair", "agency", "airport", "analysis", "apple", "article", "assumption", "audience", "bird", "boyfriend",
     "chapter", "cheek", "client", "collection", "dad", "data", "death", "device", "direction", "disease",
     "effort", "exam", "excitement", "expression", "friendship",
-    "gene", "goal", "guidance", 
+    "gene", "goal", "guidance",
     "inspector", "insurance",
     "language", "law", "loss",
     "manager", "medicine", "mud",
@@ -143,7 +143,7 @@ class DHCPVariant:
         self.form_classes = [
             RegexpForm.make_task("net", answer=re.compile(f"^{client_ip4}/24$", re.I)),
             RegexpForm.make_task("dns", answer=re.compile(f"^{http_ip}$", re.I)),
-            RegexpForm.make_task("domain", answer=re.compile(f"^{random_domain.replace('.', chr(92) + '.')}$", re.I))
+            RegexpForm.make_task("domain", answer=re.compile(f"^{random_domain.replace('.', chr(92) + '.')}\\.?$", re.I))
         ]
 
 
@@ -155,7 +155,7 @@ class DHCPChapter(DockerMixin, FormMixin, BaseChapter[DHCPVariant]):
         ChapterTask("ip4", "Получите IPv4-адрес", Decimal(1)),
         ChapterTask("net", "Адрес и маска сети", Decimal(1)),
         ChapterTask("domain", "Домен сети", Decimal(2)),
-        ChapterTask("slaac", "Получите SLAAC-адрес", Decimal(1)),
+        ChapterTask("slaac", "Получите SLAAC-адрес", Decimal(2)),
         ChapterTask("ip6", "Получите адрес по DHCPv6", Decimal(1)),
         ChapterTask("dns", "Адрес сайта", Decimal(1)),
         ChapterTask("web", "Кнопка", Decimal(2))

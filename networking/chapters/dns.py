@@ -111,7 +111,7 @@ class DNSChapter(CheckableMixin, DockerMixin, FormMixin, BaseChapter[DNSVariant]
         ChapterTask("ip", "IP-адрес", Decimal(1)),
         ChapterTask("servers", "Список серверов", Decimal(2)),
         ChapterTask("recursive", "Рекурсивный сервер", Decimal(2)),
-        ChapterTask("authoritative", "Авторитетный сервер", Decimal(1)),
+        ChapterTask("authoritative", "Авторитетный сервер", Decimal(2)),
         ChapterTask("mail", "Почта", Decimal(1)),
         ChapterTask("subdomain", "Поддомен", Decimal(2)),
         ChapterTask("transfer", "Трансфер", Decimal(2))

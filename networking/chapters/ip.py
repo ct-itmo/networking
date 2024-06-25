@@ -38,7 +38,7 @@ class IPVariant:
         rnd = Random(f"{SECRET_SEED}-{user_id}")
 
         self.ll_mac = util.generate_mac(rnd)
-        
+
         ip4_network = util.generate_subnet(rnd, IPNetwork("10.0.0.0/8"), 24)
         self.ip4_client, self.ip4_server = util.generate_distinct(2, util.generate_address, rnd, ip4_network)
 
