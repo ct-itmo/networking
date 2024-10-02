@@ -28,7 +28,7 @@
     <tbody>
         {%- for user_meta in users %}
         {%- set user = user_meta.user %}
-        <tr {%- if user.exam is not none and user.exam.has_debt} style="background-color: #fd7c6e;" title="Была задолженность"{% endif %}>
+        <tr {%- if user.exam is not none and user.exam.has_debt %} style="background-color: #fd7c6e;" title="Была задолженность"{% endif %}>
             <td>{{ user.id }}</td>
             <td>{{ user.name }}</td>
             <td>{% if user.exam is none %}{{ user_meta.score }}{% else %}{{ user.exam.calculate_points(user_meta.score) }}{% endif %}</td>
