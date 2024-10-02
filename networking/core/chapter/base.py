@@ -91,27 +91,27 @@ class BaseChapter(Generic[Variant]):
         for attempt in attempts:
             if attempt.is_correct:
                 is_solved = True
-            
+
             attempt_score: Decimal | None = None
             if attempt.points is not None:
                 attempt_score = attempt.points
             elif attempt.is_correct:
                 attempt_score = task.points
-            
+
             if attempt_score is not None:
                 if self.deadline is not None and attempt.submitted > self.deadline:
                     if self.hard_deadline:
                         continue
 
                     attempt_score *= Decimal('0.75')
-                
+
                 if score is None:
                     score = attempt_score
                 else:
                     score = max(score, attempt_score)
 
         if with_debt and score is not None:
-            attempt_score *= Decimal('1.5')
+            score *= Decimal('1.5')
 
         return ChapterTaskResult(task, is_solved, score)
 
