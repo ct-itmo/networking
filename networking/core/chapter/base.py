@@ -102,14 +102,16 @@ class BaseChapter(Generic[Variant]):
                 if self.deadline is not None and attempt.submitted > self.deadline:
                     if self.hard_deadline:
                         continue
-                
-                    if with_debt:
-                        attempt_score *= Decimal('1.5')
+
+                    attempt_score *= Decimal('0.75')
                 
                 if score is None:
                     score = attempt_score
                 else:
                     score = max(score, attempt_score)
+
+        if with_debt and score is not None:
+            attempt_score *= Decimal('1.5')
 
         return ChapterTaskResult(task, is_solved, score)
 
