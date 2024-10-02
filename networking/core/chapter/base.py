@@ -103,8 +103,8 @@ class BaseChapter(Generic[Variant]):
                     if self.hard_deadline:
                         continue
                 
-                    if not with_debt:
-                        attempt_score *= Decimal('0.75')
+                    if with_debt:
+                        attempt_score *= Decimal('1.5')
                 
                 if score is None:
                     score = attempt_score
