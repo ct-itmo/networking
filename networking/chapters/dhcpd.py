@@ -114,7 +114,7 @@ class DHCPDChapter(CheckableMixin, DockerMixin, FormMixin, BaseChapter[DHCPDVari
     deadline = datetime(2024, 5, 7, 21, 0, 0)
     tasks = [
         ChapterTask("ip4", "Выдайте IPv4-адрес", Decimal(4)),
-        ChapterTask("ip6", "Настройте SLAAC", Decimal(3)),
+        ChapterTask("ip6", "Настройте SLAAC", Decimal(4)),
         ChapterTask("mac", "MAC-адрес", Decimal(1))
     ]
 

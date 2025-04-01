@@ -154,7 +154,7 @@ class DHCPChapter(DockerMixin, FormMixin, BaseChapter[DHCPVariant]):
     tasks = [
         ChapterTask("ip4", "Получите IPv4-адрес", Decimal(1)),
         ChapterTask("net", "Адрес и маска сети", Decimal(1)),
-        ChapterTask("domain", "Домен сети", Decimal(1)),
+        ChapterTask("domain", "Домен сети", Decimal(2)),
         ChapterTask("slaac", "Получите SLAAC-адрес", Decimal(1)),
         ChapterTask("ip6", "Получите адрес по DHCPv6", Decimal(1)),
         ChapterTask("dns", "Адрес сайта", Decimal(1)),
