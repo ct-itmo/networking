@@ -110,11 +110,11 @@ class IPChapter(DockerMixin, FormMixin, BaseChapter[IPVariant]):
     tasks = [
         ChapterTask("netcalc", "Локальные сети", Decimal(1)),
         ChapterTask("ping4", "Пинг!", Decimal(1)),
-        ChapterTask("mac4", "MAC-адрес", Decimal(2)),
-        ChapterTask("ping_ll", "Link-local", Decimal(2)),
+        ChapterTask("mac4", "MAC-адрес", Decimal(1)),
+        ChapterTask("ping_ll", "Link-local", Decimal(1)),
         ChapterTask("ping6", "IPv6-пинг", Decimal(1)),
         ChapterTask("mac6", "MAC-адрес (v6)", Decimal(1)),
-        ChapterTask("mtu", "MTU", Decimal(3))
+        ChapterTask("mtu", "MTU", Decimal(2))
     ]
 
     @util.scope_cached("variant")

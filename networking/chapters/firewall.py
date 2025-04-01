@@ -384,14 +384,14 @@ class FirewallChapter(CheckableMixin, DockerMixin, BaseChapter[FirewallVariant])
     deadline = datetime(2024, 5, 21, 21, 0, 0)
     tasks = [
         ChapterTask("setup", "Устройство в двух сетях", Decimal(1)),
-        ChapterTask("forward_a_to_b", "Форвардинг из A в B", Decimal(2)),
+        ChapterTask("forward_a_to_b", "Форвардинг из A в B", Decimal(1)),
         ChapterTask("forward_b_to_a", "Форвардинг из B в A", Decimal(1)),
-        ChapterTask("tcp_unidirectional", "TCP только из A в B", Decimal(2)),
+        ChapterTask("tcp_unidirectional", "TCP только из A в B", Decimal(1)),
         ChapterTask("udp_ports", "Ограничение UDP", Decimal(1)),
         ChapterTask("tcp_body_filter", "Фильтр содержимого", Decimal(2)),
         ChapterTask("forward_nat", "NAT", Decimal(2)),
-        ChapterTask("icmp_config", "Настройка ICMP", Decimal(2)),
-        ChapterTask("http_access", "HTTP-доступ", Decimal(2))
+        ChapterTask("icmp_config", "Настройка ICMP", Decimal(1)),
+        ChapterTask("http_access", "HTTP-доступ", Decimal(1))
     ]
 
     @util.scope_cached("variant")
