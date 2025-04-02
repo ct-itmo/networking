@@ -111,7 +111,7 @@ class DHCPDVariant:
 class DHCPDChapter(CheckableMixin, DockerMixin, FormMixin, BaseChapter[DHCPDVariant]):
     slug = "dhcpd"
     name = "DHCP-сервер"
-    deadline = datetime(2024, 5, 7, 21, 0, 0)
+    deadline = datetime(2025, 5, 7, 21, 0, 0)
     tasks = [
         ChapterTask("ip4", "Выдайте IPv4-адрес", Decimal(4)),
         ChapterTask("ip6", "Настройте SLAAC", Decimal(4)),

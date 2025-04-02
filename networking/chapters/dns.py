@@ -106,7 +106,7 @@ class DNSVariant:
 class DNSChapter(CheckableMixin, DockerMixin, FormMixin, BaseChapter[DNSVariant]):
     slug = "dns"
     name = "Протокол DNS"
-    deadline = datetime(2024, 5, 14, 21, 0, 0)
+    deadline = datetime(2025, 5, 14, 21, 0, 0)
     tasks = [
         ChapterTask("ip", "IP-адрес", Decimal(1)),
         ChapterTask("servers", "Список серверов", Decimal(2)),
