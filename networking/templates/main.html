@@ -76,7 +76,7 @@
     {% if user.exam is not none %}
     Вы набрали {{ user.exam.test_points }} балл{{ user.exam.test_points|ending("", "а", "ов") }}.
     {% endif %}
-    {# <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vRL44O-WGi5-GhU3bI5OTAk8BCGxIN_6G_nLVfc9eo-bOzFbs_HBd0wkEVJ56HsmeGsr-tt42_leeFr/pubhtml?gid=1736302977&single=true">Все результаты теста</a> #}
+    <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTFmKOm207mmbeN8a5FpRBbS9Fukc01EqOuqbtPHFw-9ldT6hOoW_zyb9DUV5MNG0PSWfsyCCaH4T2_/pubhtml">Все результаты теста</a>
 </p>
 
 <p>
@@ -87,8 +87,8 @@
 <h3>Устный экзамен</h3>
 
 <p>
-    Устный экзамен будет проведён онлайн 19 июня. Расписание сдачи будет опубликовано вместе с баллами за тест. Чтобы прийти на устный экзамен, укажите ваше пожелание в тесте.
-    Номер вашего билета появится за 15 минут до времени сдачи.
+    Устный экзамен будет проведён онлайн 19 июня. Чтобы прийти на устный экзамен, укажите ваше пожелание в тесте и запишитесь на нужное время согласно инструкциям в канале.
+    Номер вашего билета появится за 30 минут до времени сдачи.
 </p>
 
 {% if user.exam is not none and user.exam.ticket is not none %}
@@ -102,14 +102,14 @@
 </p>
 {% elif now() >= user.exam.ticket_time %}
 <p>
-    Ваш билет — <strong>{{ user.exam.ticket }}</strong>. Через 15 минут после выдачи
+    Ваш билет — <strong>{{ user.exam.ticket }}</strong>. Через 30 минут после выдачи
     (или чуть позже) мы пригласим вас в комнату в Zoom для ответа. Не забудьте поменять
     ваше имя в Zoom на настоящее, чтобы мы вас нашли.
 </p>
 {% else %}
 <p>
     Вы увидите ваш номер вашего билета на этом месте в <strong>{{ user.exam.ticket_time|moscowtime }}</strong>.
-    После этого у вас будет 15 минут на подготовку.
+    После этого у вас будет 30 минут на подготовку.
 </p>
 {% endif %}
 {% else %}
@@ -123,20 +123,20 @@
     так, возможно, обзорно и по другим).
 </p>
 
-{# <p>Список билетов:</p>
+<p>Список билетов:</p>
 
 <ol>
-    <li>Стек OSI, различие между уровнями.</li>
-    <li>Протоколы IPv4 и IPv6. Локальные сети и NAT. Специальные адреса. Фрагментация. Протокол ICMP.</li>
-    <li>Ethernet-фреймы. ARP и ND. SLAAC и DHCP.</li>
-    <li>Протоколы UDP и TCP. Three-way handshake, TCP Fast Open, TCP congestion control.</li>
-    <li>Протокол DNS. IDN. Reverse DNS. Типы записей. Иерархия серверов, рекурсивные сервера. DNSSEC. Whois.</li>
-    <li>Протокол HTTP. URL. Форматы запросов и ответов. Cookies, кеширование, Range-запросы. HTTP/2, HTTP/3.</li>
-    <li>Протоколы SSL/TLS. Сертификаты и CA. CRL и OCSP. Сессионные ключи и Forward secrecy. (E)SNI. HSTS. Certificate Transparency.</li>
-    <li>VPN. tun/tap. OpenVPN, Wireguard, Proxy, SOCKS5, Shadowsocks. IPSec. MPLS. TOR.</li>
-    <li>Ethernet. CSMA/CD. VLAN. DWDM. WiFi. DFS.
-    <li>Маршрутизация. RIP. OSPF. IS-IS. BGP. Автономные системы.</li>
-</ol> #}
+<li>Стек OSI, различие между уровнями.</li>
+<li>Протоколы IPv4 и IPv6. Локальные сети и NAT. Специальные адреса. Фрагментация. Протокол ICMP.</li>
+<li>Ethernet. CSMA/CD. VLAN. DWDM. WiFi.</li>
+<li>Ethernet-фреймы. ARP и ND. DHCP.</li>
+<li>Протоколы UDP и TCP. Three-way handshake, TCP Fast Open, TCP congestion control.</li>
+<li>Протокол DNS. IDN. Reverse DNS. Типы записей. Иерархия серверов, рекурсивные сервера. DNSSEC. Трансфер зоны. Whois.</li>
+<li>Протокол HTTP. URL. Форматы запросов и ответов. Cookies, кеширование, Range-запросы. HTTP/2, HTTP/3.</li>
+<li>Протоколы SSL/TLS. Сертификаты и CA. CRL и OSCP. Сессионные ключи и Forward secrecy. (E)SNI. HSTS. Certificate Transparency.</li>
+<li>VPN. tun/tap. OpenVPN, Wireguard, Proxy, SOCKS5, Shadowsocks. IPSec. MPLS. TOR.</li>
+<li>Маршрутизация. RIP. BGP. Автономные системы.</li>
+</ol>
 
 <h3>Как получить оценку?</h3>
 
