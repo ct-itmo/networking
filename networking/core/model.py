@@ -12,7 +12,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from quirck.auth.model import User
 from quirck.db.base import Base
-    
+
 
 class Attempt(Base):
     __tablename__ = "attempt"
@@ -53,7 +53,7 @@ class Report(Base):
 class Log(Base):
     __tablename__ = "log"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)    
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     created: Mapped[datetime] = mapped_column(DateTime, server_default=text("now()"), nullable=False)
     user_id: Mapped[int] = mapped_column(
         BigInteger,
@@ -92,7 +92,7 @@ class Exam(Base):
         if self.has_debt:
             return min((self.test_points or 0) + chapter_points, Decimal(74))
         else:
-            return min((self.test_points or 0) + chapter_points, Decimal(90))
+            return min((self.test_points or 0) + chapter_points, Decimal(83))
 
 
 User.attempts = relationship("Attempt", back_populates="user")
