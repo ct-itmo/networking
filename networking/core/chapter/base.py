@@ -67,6 +67,7 @@ class BaseChapter(Generic[Variant]):
     deadline: datetime | None
     hard_deadline: bool = False
     private: bool = False
+    need_report: bool = True
     tasks: list[ChapterTask]
 
     routes: list[BaseRoute]
@@ -150,29 +151,37 @@ class BaseChapter(Generic[Variant]):
             raise HTTPException(403, "Доступ запрещён")
 
         attempts = await self.get_attempts(request)
-        last_report = (await session.scalars(
-            select(Report)
-                .where(Report.user_id == user.id)
-                .where(Report.chapter == self.slug)
-                .order_by(Report.submitted.desc())
-        )).first()
 
-        report_form = await ReportForm.from_formdata(
-            request,
-            prefix="report",
-            data={"report": last_report and last_report.text}
-        )
+        if self.need_report:
+            last_report = (await session.scalars(
+                select(Report)
+                    .where(Report.user_id == user.id)
+                    .where(Report.chapter == self.slug)
+                    .order_by(Report.submitted.desc())
+            )).first()
 
-        if report_form.submit.data:
-            if await report_form.validate_on_submit():
-                report = Report(
-                    user_id=user.id,
-                    chapter=self.slug,
-                    text=report_form.report.data
-                )
-                session.add(report)
+            report_form = await ReportForm.from_formdata(
+                request,
+                prefix="report",
+                data={"report": last_report and last_report.text}
+            )
 
-                return RedirectResponse(f"{request.url_for(f'networking:{self.slug}:page')}#report", status_code=303)
+            if report_form.submit.data:
+                if await report_form.validate_on_submit():
+                    report = Report(
+                        user_id=user.id,
+                        chapter=self.slug,
+                        text=report_form.report.data
+                    )
+                    session.add(report)
+
+                    return RedirectResponse(f"{request.url_for(f'networking:{self.slug}:page')}#report", status_code=303)
+
+            context.update(
+                report=report_form,
+                last_report_time=last_report and last_report.submitted
+            )
+            context["report"] = report_form
 
         chapter_result = self.calculate_score(
             attempts,
@@ -180,7 +189,6 @@ class BaseChapter(Generic[Variant]):
         )
 
         context.update(
-            report=report_form,
             variant=await self.get_variant(request),
             tasks={
                 result.task.slug: result
@@ -188,7 +196,6 @@ class BaseChapter(Generic[Variant]):
             },
             chapter=chapter_result,
             clear_progress=ClearProgressForm(request, prefix="clear-progress"),
-            last_report_time=last_report and last_report.submitted
         )
 
         return TemplateResponse(request, f"chapters/{self.slug}.html", context)

@@ -18,6 +18,7 @@ class PracticeChapter(BaseChapter[PracticeVariant]):
     tasks = [
         ChapterTask("practice", "Практическое задание", Decimal(10))
     ]
+    need_report = False
 
     @util.scope_cached("variant")
     async def get_variant(self, request: Request) -> PracticeVariant:

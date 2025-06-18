@@ -14,11 +14,14 @@
         {% endif %}
     </p>
 
+    {% if variant.deployment is defined %}
     {% include "util/vpn.html" %}
 
     {% block chapter %}
     {% endblock %}
 
+    {% if chapter.chapter.need_report %}
     {% include "util/report.html" %}
+    {% endif %}
     </article>
 {% endblock %}
