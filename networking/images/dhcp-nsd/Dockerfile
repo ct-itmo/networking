@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:trixie-slim
 
 RUN apt-get update -q && \
     apt-get install -qy --no-install-recommends iproute2 nsd && \

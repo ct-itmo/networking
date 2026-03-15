@@ -1,9 +1,7 @@
 use std::net::SocketAddr;
 
-use env_logger;
-
+use dns::check::{TcpChecker, UdpChecker};
 use dns::lab::LabClient;
-use dns::check::{UdpChecker, TcpChecker};
 use dns::types::Error;
 
 async fn check_udp(address: SocketAddr, lab_client: &LabClient) -> Result<(), Error> {
@@ -12,7 +10,7 @@ async fn check_udp(address: SocketAddr, lab_client: &LabClient) -> Result<(), Er
     udp_checker.check_recursive().await?;
     udp_checker.check_authoritative().await?;
     udp_checker.check_mail().await?;
-    udp_checker.check_subdomain().await?;    
+    udp_checker.check_subdomain().await?;
 
     Ok(())
 }
@@ -29,7 +27,7 @@ async fn check_tcp(address: SocketAddr, lab_client: &LabClient) -> Result<(), Er
 async fn main() -> Result<(), Error> {
     env_logger::init();
 
-    let lab_client = LabClient::new();
+    let lab_client = LabClient::new()?;
 
     let address = ([10, 52, 1, 1], 53).into();
 

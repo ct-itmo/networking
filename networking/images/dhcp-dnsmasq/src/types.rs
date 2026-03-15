@@ -2,11 +2,8 @@ use core::{fmt, result};
 use std::error;
 use std::ffi::OsString;
 use std::fmt::Formatter;
-use std::str::Utf8Error;
 use std::num::ParseIntError;
-
-use hyper::{Error as HyperError};
-use hyper::http::{Error as HyperHTTPError};
+use std::str::Utf8Error;
 
 #[derive(Debug)]
 pub enum Error {
@@ -14,33 +11,16 @@ pub enum Error {
     Utf(Utf8Error),
     OsUtf(OsString),
     ParseInt(ParseIntError),
-    Hyper(HyperError),
-    HyperHTTP(HyperHTTPError)
+    Reqwest(reqwest::Error),
 }
 
 #[derive(Debug)]
 pub enum ErrorKind {
     UnknownAddress(String),
     MissingVariable(String),
-    // HTTP,
-    // Pnet(String),
-    // JsonLog(String),
-    // Systemd(String),
-    // CheckJob(String),
-    Hyper(String)
+    MissingArguments(String),
+    Http(String),
 }
-
-/*impl From<AddrParseError> for Error {
-    fn from(err: AddrParseError) -> Self {
-        Error::Ip(err)
-    }
-}
-
-impl From<Infallible> for Error {
-    fn from(err: Infallible) -> Self {
-        Error::Convert(err)
-    }
-}*/
 
 impl From<OsString> for Error {
     fn from(str: OsString) -> Self {
@@ -60,15 +40,9 @@ impl From<Utf8Error> for Error {
     }
 }
 
-impl From<HyperError> for Error {
-    fn from(err: HyperError) -> Self {
-        Error::Hyper(err)
-    }
-}
-
-impl From<HyperHTTPError> for Error {
-    fn from(err: HyperHTTPError) -> Self {
-        Error::HyperHTTP(err)
+impl From<reqwest::Error> for Error {
+    fn from(err: reqwest::Error) -> Self {
+        Error::Reqwest(err)
     }
 }
 
@@ -93,11 +67,8 @@ impl fmt::Display for Error {
             Error::ParseInt(err) => {
                 write!(f, "Integer parse error: {}", err)
             }
-            Error::Hyper(err) => {
+            Error::Reqwest(err) => {
                 write!(f, "HTTP client error: {}", err)
-            }
-            Error::HyperHTTP(err) => {
-                write!(f, "HTTP request error: {}", err)
             }
         }
     }

@@ -1,13 +1,10 @@
 use std::env;
 
-use env_logger;
-use log::info;
-
-use hyper::service::{make_service_fn, service_fn};
-use hyper::Server;
-
+use axum::Router;
+use axum::routing::{get, post};
 use http::button::Button;
-use http::types::Error;
+use http::types::{Error, ErrorKind};
+use log::info;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -15,25 +12,21 @@ async fn main() -> Result<(), Error> {
 
     info!("Started");
 
-    let bind_address = env::var("BIND").unwrap();
-    let host = env::var("HOST").unwrap();
+    let bind_address =
+        env::var("BIND").map_err(|_| ErrorKind::MissingVariable("BIND".to_string()))?;
+    let host = env::var("HOST").map_err(|_| ErrorKind::MissingVariable("HOST".to_string()))?;
 
-    let addr = bind_address.parse()?;
-    let button = std::sync::Arc::new(Button::new(&host));
+    let button = Button::new(&host)?;
 
-    let make_svc = make_service_fn(move |_conn| {
-        let button = button.clone();
-        async {
-            Ok::<_, Error>(service_fn(move |req| {
-                let button = button.clone();
-                async move { button.handle(req).await }
-            }))
-        }
-    });
+    let app = Router::new()
+        .route("/", get(Button::get_handler))
+        .route("/", post(Button::post_handler))
+        .with_state(button);
 
-    let server = Server::try_bind(&addr)?.serve(make_svc);
-    info!("Listening on {}", addr);
-    server.await?;
+    let listener = tokio::net::TcpListener::bind(&bind_address).await?;
+    info!("Listening on {}", bind_address);
+
+    axum::serve(listener, app).await?;
 
     Ok(())
 }

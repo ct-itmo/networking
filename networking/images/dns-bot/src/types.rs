@@ -3,13 +3,12 @@ use std::env::VarError;
 use std::error;
 use std::ffi::OsString;
 use std::fmt::Formatter;
-use std::str::Utf8Error;
+use std::net::AddrParseError;
 use std::num::ParseIntError;
+use std::str::Utf8Error;
 
-use hyper::{Error as HyperError};
-use hyper::http::{Error as HyperHTTPError};
-use trust_dns_client::error::ClientError;
-use trust_dns_client::proto::error::ProtoError;
+use hickory_client::ClientError;
+use hickory_client::proto::ProtoError;
 
 #[derive(Debug)]
 pub enum Error {
@@ -18,16 +17,17 @@ pub enum Error {
     OsUtf(OsString),
     Environment(VarError),
     ParseInt(ParseIntError),
-    Hyper(HyperError),
-    HyperHTTP(HyperHTTPError),
+    Reqwest(reqwest::Error),
     ProtoError(ProtoError),
-    DNSError(ClientError)
+    DNSError(ClientError),
+    AddrError(AddrParseError),
 }
 
 #[derive(Debug)]
 pub enum ErrorKind {
     WrongResponse(String),
-    Hyper(String)
+    Http(String),
+    MissingVariable(String),
 }
 
 impl From<OsString> for Error {
@@ -54,15 +54,9 @@ impl From<Utf8Error> for Error {
     }
 }
 
-impl From<HyperError> for Error {
-    fn from(err: HyperError) -> Self {
-        Error::Hyper(err)
-    }
-}
-
-impl From<HyperHTTPError> for Error {
-    fn from(err: HyperHTTPError) -> Self {
-        Error::HyperHTTP(err)
+impl From<reqwest::Error> for Error {
+    fn from(err: reqwest::Error) -> Self {
+        Error::Reqwest(err)
     }
 }
 
@@ -75,6 +69,12 @@ impl From<ProtoError> for Error {
 impl From<ClientError> for Error {
     fn from(err: ClientError) -> Self {
         Error::DNSError(err)
+    }
+}
+
+impl From<AddrParseError> for Error {
+    fn from(err: AddrParseError) -> Self {
+        Error::AddrError(err)
     }
 }
 
@@ -102,17 +102,17 @@ impl fmt::Display for Error {
             Error::ParseInt(err) => {
                 write!(f, "Integer parse error: {}", err)
             }
-            Error::Hyper(err) => {
+            Error::Reqwest(err) => {
                 write!(f, "HTTP client error: {}", err)
             }
-            Error::HyperHTTP(err) => {
-                write!(f, "HTTP request error: {}", err)
-            },
             Error::ProtoError(err) => {
                 write!(f, "DNS error: {}", err)
-            },
+            }
             Error::DNSError(err) => {
                 write!(f, "DNS error: {}", err)
+            }
+            Error::AddrError(err) => {
+                write!(f, "Address parse error: {}", err)
             }
         }
     }

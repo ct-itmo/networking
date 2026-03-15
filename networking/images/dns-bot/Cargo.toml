@@ -1,14 +1,12 @@
 [package]
 name = "dns"
-version = "2023.0.0"
-edition = "2021"
+version = "2026.0.0"
+edition = "2024"
 
 [dependencies]
-async-std = {version = "^1.12.0", features = ["attributes", "tokio1"]}
-async-trait = "^0.1.68"
-env_logger = "^0.10.0"
-hyper = "^0.14.26"
-hyperlocal = "^0.8.0"
-log = "^0.4.17"
-tokio = { version = "^1.28.0", features = ["full"] }
-trust-dns-client = { version = "^0.22.0", default-features = false }
+async-trait = "^0.1.89"
+env_logger = "^0.11.9"
+log = "^0.4.29"
+reqwest = { version = "^0.13", features = ["charset"], default-features = false }
+tokio = { version = "^1.50.0", features = ["macros", "rt-multi-thread", "net"] }
+hickory-client = { version = "0.25.2" }

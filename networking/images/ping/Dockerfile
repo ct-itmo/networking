@@ -1,6 +1,4 @@
-FROM rust:1.69.0-slim-bullseye as build
-
-ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL sparse
+FROM rust:1.94.0-slim-trixie AS build
 
 RUN USER=root cargo new --bin ping
 WORKDIR /ping
@@ -14,7 +12,7 @@ COPY ./src src
 
 RUN cargo build --release
 
-FROM debian:bullseye-slim
+FROM debian:trixie-slim
 
 RUN apt-get update -q && apt-get install -qy --no-install-recommends iproute2 nftables strace && rm -rf /var/lib/apt/lists/*
 COPY start.sh /app/start.sh
