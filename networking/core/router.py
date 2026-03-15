@@ -15,7 +15,7 @@ from starlette.routing import Mount, Route
 from quirck.auth.middleware import AuthenticationMiddleware
 from quirck.auth.model import User
 from quirck.core import s3
-from quirck.web.template import TemplateResponse, template_env
+from quirck.web.template import TemplateResponse
 
 from networking.chapters import chapters
 from networking.core.chapter.base import ChapterResult
@@ -34,7 +34,7 @@ async def main_page(request: Request) -> Response:
             .order_by(Attempt.chapter, Attempt.task, Attempt.submitted.desc())
     )).all()
 
-    exam: Exam | None = user.exam  # type: ignore
+    exam: Exam | None = user.exam
 
     user_chapters = [
         chapter.calculate_score(
@@ -112,7 +112,7 @@ async def scoreboard(request: Request) -> Response:
         UserScore(user, [
             chapter.calculate_score(
                 grouped_attempts.get(user.id, {}).get(chapter.slug, []),
-                False if user.exam is None else user.exam.has_debt  # type: ignore
+                False if user.exam is None else user.exam.has_debt
             )
             for chapter in chapters
         ])

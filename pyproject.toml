@@ -1,16 +1,32 @@
-[tool.poetry]
+[project]
 name = "networking"
-version = "2023.0b"
+version = "2026.1"
 description = "Assignments for networking course"
-authors = ["Nikita Sychev <root@nsychev.ru>"]
-license = "MIT"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "netaddr>=1.3.0",
+    "quirck",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-quirck = {path = "quirck", develop = true}
-netaddr = "^1.3.0"
+[tool.uv.workspace]
+members = [
+    "quirck",
+]
 
+[tool.uv.sources]
+quirck = { workspace = true, editable = true }
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.10.9,<0.11.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.6",
+    "ty>=0.0.23",
+]
+
+[tool.uv.build-backend]
+module-name = "networking"
+module-root = ""

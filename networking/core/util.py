@@ -14,9 +14,12 @@ T = TypeVar("T")
 
 def get_address_size(ip: BaseIP) -> int:
     match ip.version:
-        case 4: return 32
-        case 6: return 128
-        case _: raise ValueError(f"Unknown IP version: {ip.version}")
+        case 4:
+            return 32
+        case 6:
+            return 128
+        case _:
+            raise ValueError(f"Unknown IP version: {ip.version}")
 
 
 def generate_mac(rnd: Random) -> EUI:

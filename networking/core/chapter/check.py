@@ -21,7 +21,7 @@ from quirck.box.exception import DockerConflict
 from quirck.box.meta import ContainerMeta
 from quirck.box.model import DockerMeta, DockerState
 
-from networking.core.chapter.base import BaseChapter, Variant
+from networking.core.chapter.base import BaseChapter
 from networking.core.model import Log
 
 logger = logging.getLogger(__name__)
@@ -93,7 +93,7 @@ class CheckableMixin(BaseChapter[CheckableTaskProtocol]):
 
             try:
                 await asyncio.gather(*[container.wait(timeout=25) for container in containers])
-            except:
+            except Exception:
                 # If got timeout, try to do something anyway
                 logger.warning("Timed out when waiting for check %s", check_name)
                 pass

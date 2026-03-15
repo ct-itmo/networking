@@ -43,7 +43,7 @@ async def add_attempt(request: Request) -> Response:
         return PlainTextResponse("OK")
     except IntegrityError:
         return PlainTextResponse("User does not exist", status_code=404)
-    except Exception as exc:
+    except Exception:
         logger.exception("Cannot add attempt")
         return PlainTextResponse("Failed", status_code=500)
 

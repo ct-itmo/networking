@@ -6,6 +6,7 @@ from typing import Any, Generic, Sequence, TypeVar
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.expression import true
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
@@ -185,7 +186,7 @@ class BaseChapter(Generic[Variant]):
 
         chapter_result = self.calculate_score(
             attempts,
-            False if user.exam is None else user.exam.has_debt  # type: ignore
+            False if user.exam is None else user.exam.has_debt
         )
 
         context.update(
@@ -209,7 +210,7 @@ class BaseChapter(Generic[Variant]):
 
             await session.execute(
                 update(Attempt)
-                    .where(Attempt.is_correct == True)
+                    .where(Attempt.is_correct == true())
                     .where(Attempt.chapter == self.slug)
                     .where(Attempt.user_id == user.id)
                     .values(is_correct=False)

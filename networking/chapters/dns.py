@@ -7,7 +7,6 @@ from random import Random
 from aiodocker.containers import DockerContainer
 from netaddr import IPAddress, IPNetwork
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.datastructures import Secret
 from starlette.requests import Request
 
 from quirck.box.meta import Deployment, ContainerMeta, NetworkMeta
