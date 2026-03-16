@@ -55,8 +55,8 @@ class DockerMixin(BaseChapter[DockerTaskProtocol]):
             raise HTTPException(403, "Доступ запрещён")
 
         try:
-            await lock_meta(session, user.id, self.slug)
-            task = BackgroundTask(stop_locked, session, user.id)
+            meta = await lock_meta(session, user.id, self.slug)
+            task = BackgroundTask(stop_locked, session, meta)
         except DockerConflict:
             task = None
 

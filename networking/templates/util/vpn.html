@@ -13,6 +13,7 @@
 
     <p>
         Если что-то пошло не так, вы всегда можете перезапустить задание.
+        Не забудьте после этого переподключиться к VPN.
     </p>
 
     <form method="POST" action="{{ url_for('networking:' + chapter.slug + ':launch') }}">
@@ -26,8 +27,6 @@
     <form method="POST" action="{{ url_for('networking:' + chapter.slug + ':stop') }}">
         <p><button>Остановить</button></p>
     </form>
-
-    <p>Не забудьте после этого переподключиться к VPN.</p>
     {% elif meta and meta.state.name == 'IN_PROGRESS' %}
     {% if meta.chapter is none %}
     <p>
@@ -47,7 +46,7 @@
     {% endif %}
     {% else %}
     <p>Чтобы решить задание, его нужно активировать.</p>
-    
+
     <form method="POST" action="{{ url_for('networking:' + chapter.slug + ':launch') }}">
         <p><button>Активировать</button></p>
     </form>
