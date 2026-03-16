@@ -8,7 +8,7 @@ from starlette.responses import RedirectResponse, Response
 from starlette.routing import Route
 
 from quirck.auth.model import User
-from quirck.box.docker import launch, lock_meta, stop
+from quirck.box.docker import launch, lock_meta, stop_locked
 from quirck.box.exception import DockerConflict
 from quirck.box.meta import Deployment
 
@@ -26,7 +26,7 @@ class DockerMixin(BaseChapter[DockerTaskProtocol]):
             Route("/launch", self.launch, name="launch", methods=["POST"]),
             Route("/stop", self.stop, name="stop", methods=["POST"]),
         ]
-    
+
     async def launch(self, request: Request) -> Response:
         session: AsyncSession = request.scope["db"]
         user: User = request.scope["user"]
@@ -53,16 +53,12 @@ class DockerMixin(BaseChapter[DockerTaskProtocol]):
 
         if self.private and not user.is_admin:
             raise HTTPException(403, "Доступ запрещён")
-    
+
         try:
-            meta = await lock_meta(session, user.id, self.slug)
-            task = BackgroundTask(stop, session, user.id)
+            await lock_meta(session, user.id, self.slug)
+            task = BackgroundTask(stop_locked, session, user.id)
         except DockerConflict:
             task = None
-
-        meta = await lock_meta(session, user.id, self.slug)
-        if meta.state == "READY":
-            await meta.stop()
 
         return RedirectResponse(
             request.url_for(f"networking:{self.slug}:page"), status_code=303,
