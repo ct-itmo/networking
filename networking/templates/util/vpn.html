@@ -19,6 +19,14 @@
         <p><button>Перезапустить</button></p>
     </form>
 
+    <p>
+        Когда вы завершите работу, вы можете остановить задание для экономии ресурсов.
+    </p>
+
+    <form method="POST" action="{{ url_for('networking:' + chapter.slug + ':stop') }}">
+        <p><button>Остановить</button></p>
+    </form>
+
     <p>Не забудьте после этого переподключиться к VPN.</p>
     {% elif meta and meta.state.name == 'IN_PROGRESS' %}
     {% if meta.chapter is none %}
