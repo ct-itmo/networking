@@ -29,8 +29,10 @@ class DHCPDVariant:
     ip4_net: IPNetwork
     ip6_net: IPNetwork
 
-    async def check_dhcpd(self, session: AsyncSession, meta: DockerMeta, containers: list[DockerContainer]) -> None:
-        container, = containers
+    async def check_dhcpd(
+        self, session: AsyncSession, meta: DockerMeta, containers: list[DockerContainer]
+    ) -> None:
+        (container,) = containers
 
         try:
             tar = await container.get_archive("/out/addresses")
@@ -60,7 +62,7 @@ class DHCPDVariant:
                     chapter=DHCPDChapter.slug,
                     task="ip4",
                     data={},
-                    is_correct=True
+                    is_correct=True,
                 )
                 session.add(attempt)
 
@@ -70,7 +72,7 @@ class DHCPDVariant:
                     chapter=DHCPDChapter.slug,
                     task="ip6",
                     data={},
-                    is_correct=True
+                    is_correct=True,
                 )
                 session.add(attempt)
 
@@ -84,27 +86,30 @@ class DHCPDVariant:
         host_mac = util.generate_mac(rnd)
 
         self.deployment = Deployment(
-            containers=[
-                ContainerMeta.make_vpn(user_id, ["internal"])
-            ],
-            networks=[
-                NetworkMeta(name="internal")
-            ]
+            containers=[ContainerMeta.make_vpn(user_id, ["internal"])],
+            networks=[NetworkMeta(name="internal")],
         )
 
         self.form_classes = [
-            RegexpForm.make_task("mac", answer=re.compile(f"^{str(host_mac).replace('-', '[-:]?')}$", re.I))
+            RegexpForm.make_task(
+                "mac",
+                answer=re.compile(f"^{str(host_mac).replace('-', '[-:]?')}$", re.I),
+            )
         ]
 
         self.checks = {
-            "dhcpd": Check([
-                ContainerMeta(
-                    name="bot",
-                    image="ct-itmo/labs-networking-dhcpd-bot",
-                    networks={"internal": str(host_mac)},
-                    ipv6_forwarding=False
-                )
-            ], { 0: "/out/dhcpcd.log" }, self.check_dhcpd)
+            "dhcpd": Check(
+                [
+                    ContainerMeta(
+                        name="bot",
+                        image="ct-itmo/labs-networking-dhcpd-bot",
+                        networks={"internal": str(host_mac)},
+                        ipv6_forwarding=False,
+                    )
+                ],
+                {0: "/out/dhcpcd.log"},
+                self.check_dhcpd,
+            )
         }
 
 
@@ -115,7 +120,7 @@ class DHCPDChapter(CheckableMixin, DockerMixin, FormMixin, BaseChapter[DHCPDVari
     tasks = [
         ChapterTask("ip4", "Выдайте IPv4-адрес", Decimal(4)),
         ChapterTask("ip6", "Настройте SLAAC", Decimal(4)),
-        ChapterTask("mac", "MAC-адрес", Decimal(1))
+        ChapterTask("mac", "MAC-адрес", Decimal(1)),
     ]
 
     @util.scope_cached("variant")

@@ -4,8 +4,13 @@ from typing import Any
 
 from sqlalchemy import (
     ForeignKey,
-    BigInteger, Boolean, DateTime, Numeric, String, Text,
-    text
+    BigInteger,
+    Boolean,
+    DateTime,
+    Numeric,
+    String,
+    Text,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -18,11 +23,13 @@ class Attempt(Base):
     __tablename__ = "attempt"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    submitted: Mapped[datetime] = mapped_column(DateTime, server_default=text("now()"), nullable=False)
+    submitted: Mapped[datetime] = mapped_column(
+        DateTime, server_default=text("now()"), nullable=False
+    )
     user_id: Mapped[int] = mapped_column(
         BigInteger,
         ForeignKey("user.id", onupdate="CASCADE", ondelete="CASCADE"),
-        nullable=False
+        nullable=False,
     )
     chapter: Mapped[str] = mapped_column(String(32), nullable=False)
     task: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -38,11 +45,13 @@ class Report(Base):
     __tablename__ = "report"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    submitted: Mapped[datetime] = mapped_column(DateTime, server_default=text("now()"), nullable=False)
+    submitted: Mapped[datetime] = mapped_column(
+        DateTime, server_default=text("now()"), nullable=False
+    )
     user_id: Mapped[int] = mapped_column(
         BigInteger,
         ForeignKey("user.id", onupdate="CASCADE", ondelete="CASCADE"),
-        nullable=False
+        nullable=False,
     )
     chapter: Mapped[str] = mapped_column(String(32), nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
@@ -54,11 +63,13 @@ class Log(Base):
     __tablename__ = "log"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    created: Mapped[datetime] = mapped_column(DateTime, server_default=text("now()"), nullable=False)
+    created: Mapped[datetime] = mapped_column(
+        DateTime, server_default=text("now()"), nullable=False
+    )
     user_id: Mapped[int] = mapped_column(
         BigInteger,
         ForeignKey("user.id", onupdate="CASCADE", ondelete="CASCADE"),
-        nullable=False
+        nullable=False,
     )
     chapter: Mapped[str] = mapped_column(String(32), nullable=False)
     check: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -75,14 +86,16 @@ class Exam(Base):
         BigInteger,
         ForeignKey("user.id", onupdate="CASCADE", ondelete="CASCADE"),
         nullable=False,
-        unique=True
+        unique=True,
     )
 
     test_points: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
     ticket: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     ticket_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     final_points: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
-    has_debt: Mapped[bool] = mapped_column(Boolean, server_default=text("false"), nullable=False)
+    has_debt: Mapped[bool] = mapped_column(
+        Boolean, server_default=text("false"), nullable=False
+    )
 
     user: Mapped[User] = relationship("User", back_populates="exam")
 

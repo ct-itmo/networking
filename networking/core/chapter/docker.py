@@ -43,8 +43,9 @@ class DockerMixin(BaseChapter[DockerTaskProtocol]):
             task = None
 
         return RedirectResponse(
-            request.url_for(f"networking:{self.slug}:page"), status_code=303,
-            background=task
+            request.url_for(f"networking:{self.slug}:page"),
+            status_code=303,
+            background=task,
         )
 
     async def stop(self, request: Request) -> Response:
@@ -61,8 +62,9 @@ class DockerMixin(BaseChapter[DockerTaskProtocol]):
             task = None
 
         return RedirectResponse(
-            request.url_for(f"networking:{self.slug}:page"), status_code=303,
-            background=task
+            request.url_for(f"networking:{self.slug}:page"),
+            status_code=303,
+            background=task,
         )
 
 

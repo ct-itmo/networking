@@ -23,22 +23,25 @@ class ParsedAttempt:
 
 class BaseTaskForm(QuirckForm):
     async def parse(self) -> list[ParsedAttempt]:
-        raise NotImplementedError(f"{self.__class__.__name__} does not implement parse()")
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not implement parse()"
+        )
 
     @classmethod
     def make_task(cls, slug: str, **kwargs) -> type["BaseTaskForm"]:
-        return type(slug, (cls, ), kwargs)
+        return type(slug, (cls,), kwargs)
 
 
 class SingleTaskForm(BaseTaskForm):
     async def check(self) -> bool:
-        raise NotImplementedError(f"{self.__class__.__name__} does not implement check()")
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not implement check()"
+        )
 
     async def parse(self) -> list[ParsedAttempt]:
-        return [ParsedAttempt(
-            task=self.__class__.__name__,
-            is_correct=await self.check()
-        )]
+        return [
+            ParsedAttempt(task=self.__class__.__name__, is_correct=await self.check())
+        ]
 
 
 class RegexpForm(SingleTaskForm):
@@ -54,7 +57,9 @@ class FormTaskProtocol(Protocol):
 
 
 class FormMixin(BaseChapter[FormTaskProtocol]):
-    async def chapter_page(self, request: Request, context: dict[str, Any] = {}) -> Response:
+    async def chapter_page(
+        self, request: Request, context: dict[str, Any] = {}
+    ) -> Response:
         session: AsyncSession = request.scope["db"]
         user: User = request.scope["user"]
 
@@ -66,8 +71,12 @@ class FormMixin(BaseChapter[FormTaskProtocol]):
         for form_class in variant.form_classes:
             name = form_class.__name__
 
-            last_attempt = next(iter(attempt for attempt in attempts if attempt.task == name), None)
-            form = await form_class.from_formdata(request, prefix=name, data=last_attempt and last_attempt.data)
+            last_attempt = next(
+                iter(attempt for attempt in attempts if attempt.task == name), None
+            )
+            form = await form_class.from_formdata(
+                request, prefix=name, data=last_attempt and last_attempt.data
+            )
 
             if form.submit.data:
                 if await form.validate_on_submit():
@@ -83,7 +92,7 @@ class FormMixin(BaseChapter[FormTaskProtocol]):
                             chapter=self.slug,
                             task=attempt.task,
                             data=form_data,
-                            is_correct=attempt.is_correct
+                            is_correct=attempt.is_correct,
                         )
                         for attempt in await form.parse()
                     ]
@@ -91,10 +100,13 @@ class FormMixin(BaseChapter[FormTaskProtocol]):
                     session.add_all(attempts)
 
                     if any(attempt.is_correct for attempt in attempts):
-                        return RedirectResponse(f"{request.url_for(f'networking:{self.slug}:page')}#{name}", status_code=303)
+                        return RedirectResponse(
+                            f"{request.url_for(f'networking:{self.slug}:page')}#{name}",
+                            status_code=303,
+                        )
                     else:
                         form.form_errors.append("Неправильный ответ")
-            
+
             forms[name] = form
 
         context["forms"] = forms

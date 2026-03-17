@@ -76,9 +76,13 @@ class DHCPVariant:
         client_ip4 = util.generate_address(rnd, next(ip4_net.subnet(prefixlen=25)))
 
         self.slaac_suffix = str(ping_mac.ipv6(0))
-        self.http_domain = "".join(rnd.choice(string.ascii_lowercase + string.digits) for _ in range(24))
+        self.http_domain = "".join(
+            rnd.choice(string.ascii_lowercase + string.digits) for _ in range(24)
+        )
 
-        random_domain = f"{rnd.choice(ADJECTIVES)}-{rnd.choice(NOUNS)}.{rnd.choice(ZONES)}"
+        random_domain = (
+            f"{rnd.choice(ADJECTIVES)}-{rnd.choice(NOUNS)}.{rnd.choice(ZONES)}"
+        )
 
         self.deployment = Deployment(
             containers=[
@@ -90,14 +94,14 @@ class DHCPVariant:
                     environment={
                         "ADDRESS4": str(ip4_net.network + 254),
                         "ADDRESS6_1": str(dnsmasq_mac.ipv6(slaac_net.value or 0)),
-                        "ADDRESS6_2": str(dhcp6_net.network + 0xffff),
+                        "ADDRESS6_2": str(dhcp6_net.network + 0xFFFF),
                         "DHCP4": str(client_ip4),
                         "DHCP6": str(util.generate_address(rnd, dhcp6_net)),
                         "DNS6": str(dns_ip),
                         "DOMAIN": random_domain,
-                        "SLAAC": str(slaac_net.network)
+                        "SLAAC": str(slaac_net.network),
                     },
-                    volumes=util.socket_volume()
+                    volumes=util.socket_volume(),
                 ),
                 ContainerMeta(
                     name="nsd",
@@ -106,10 +110,10 @@ class DHCPVariant:
                     environment={
                         "HOSTIP": str(dns_ip),
                         "DOMAIN": self.http_domain,
-                        "AAAAIP": str(http_mac.ipv6(slaac_net.value or 0))
+                        "AAAAIP": str(http_mac.ipv6(slaac_net.value or 0)),
                     },
                     mem_limit=200 * 1024 * 1024,
-                    ipv6_forwarding=False
+                    ipv6_forwarding=False,
                 ),
                 ContainerMeta(
                     name="ping",
@@ -118,10 +122,10 @@ class DHCPVariant:
                     environment={
                         "STUDENT_IP": "any",
                         "CHAPTER": "dhcp",
-                        "TASK": "slaac"
+                        "TASK": "slaac",
                     },
                     volumes=util.socket_volume(),
-                    ipv6_forwarding=False
+                    ipv6_forwarding=False,
                 ),
                 ContainerMeta(
                     name="http",
@@ -129,21 +133,24 @@ class DHCPVariant:
                     networks={"internal": str(http_mac)},
                     environment={
                         "BIND": f"[{http_ip}]:9229",
-                        "HOST": f"{self.http_domain}.localnetwork:9229"
+                        "HOST": f"{self.http_domain}.localnetwork:9229",
                     },
                     volumes=util.socket_volume(),
-                    ipv6_forwarding=False
-                )
+                    ipv6_forwarding=False,
+                ),
             ],
-            networks=[
-                NetworkMeta(name="internal")
-            ]
+            networks=[NetworkMeta(name="internal")],
         )
 
         self.form_classes = [
             RegexpForm.make_task("net", answer=re.compile(f"^{client_ip4}/24$", re.I)),
             RegexpForm.make_task("dns", answer=re.compile(f"^{http_ip}$", re.I)),
-            RegexpForm.make_task("domain", answer=re.compile(f"^{random_domain.replace('.', chr(92) + '.')}\\.?$", re.I))
+            RegexpForm.make_task(
+                "domain",
+                answer=re.compile(
+                    f"^{random_domain.replace('.', chr(92) + '.')}\\.?$", re.I
+                ),
+            ),
         ]
 
 
@@ -158,7 +165,7 @@ class DHCPChapter(DockerMixin, FormMixin, BaseChapter[DHCPVariant]):
         ChapterTask("slaac", "Получите SLAAC-адрес", Decimal(1)),
         ChapterTask("ip6", "Получите адрес по DHCPv6", Decimal(1)),
         ChapterTask("dns", "Адрес сайта", Decimal(1)),
-        ChapterTask("web", "Кнопка", Decimal(2))
+        ChapterTask("web", "Кнопка", Decimal(2)),
     ]
 
     @util.scope_cached("variant")

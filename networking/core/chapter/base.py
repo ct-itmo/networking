@@ -76,17 +76,15 @@ class BaseChapter(Generic[Variant]):
     def __init__(self):
         self.routes = [
             Route("/", self.chapter_page, name="page", methods=["GET", "POST"]),
-            Route("/clear", self.clear_progress, name="clear", methods=["POST"])
+            Route("/clear", self.clear_progress, name="clear", methods=["POST"]),
         ]
 
     def get_mount(self):
-        return Mount(
-            path=f"/{self.slug}",
-            routes=self.routes,
-            name=self.slug
-        )
+        return Mount(path=f"/{self.slug}", routes=self.routes, name=self.slug)
 
-    def calculate_task_score(self, task: ChapterTask, attempts: list[Attempt], with_debt: bool) -> ChapterTaskResult:
+    def calculate_task_score(
+        self, task: ChapterTask, attempts: list[Attempt], with_debt: bool
+    ) -> ChapterTaskResult:
         is_solved = False
         score: Decimal | None = None
 
@@ -105,7 +103,7 @@ class BaseChapter(Generic[Variant]):
                     if self.hard_deadline:
                         continue
 
-                    attempt_score *= Decimal('0.75')
+                    attempt_score *= Decimal("0.75")
 
                 if score is None:
                     score = attempt_score
@@ -113,16 +111,28 @@ class BaseChapter(Generic[Variant]):
                     score = max(score, attempt_score)
 
         if with_debt and score is not None:
-            score *= Decimal('1.5')
+            score *= Decimal("1.5")
 
         return ChapterTaskResult(task, is_solved, score)
 
-    def calculate_score(self, attempts: Sequence[Attempt], with_debt: bool = False) -> ChapterResult:
-        chapter_attempts = sorted((attempt for attempt in attempts if attempt.chapter == self.slug), key=lambda attempt: attempt.task)
-        grouped_attempts = {key: list(value) for key, value in itertools.groupby(chapter_attempts, key=lambda attempt: attempt.task)}
+    def calculate_score(
+        self, attempts: Sequence[Attempt], with_debt: bool = False
+    ) -> ChapterResult:
+        chapter_attempts = sorted(
+            (attempt for attempt in attempts if attempt.chapter == self.slug),
+            key=lambda attempt: attempt.task,
+        )
+        grouped_attempts = {
+            key: list(value)
+            for key, value in itertools.groupby(
+                chapter_attempts, key=lambda attempt: attempt.task
+            )
+        }
 
         scores = [
-            self.calculate_task_score(task, grouped_attempts.get(task.slug, []), with_debt)
+            self.calculate_task_score(
+                task, grouped_attempts.get(task.slug, []), with_debt
+            )
             for task in self.tasks
         ]
 
@@ -135,16 +145,20 @@ class BaseChapter(Generic[Variant]):
     async def get_attempts(self, request: Request) -> Sequence[Attempt]:
         user: User = request.scope["user"]
         session: AsyncSession = request.scope["db"]
-        attempts = (await session.scalars(
-            select(Attempt)
+        attempts = (
+            await session.scalars(
+                select(Attempt)
                 .where(Attempt.user_id == user.id)
                 .where(Attempt.chapter == self.slug)
                 .order_by(Attempt.task, Attempt.submitted.desc())
-        )).all()
+            )
+        ).all()
 
         return attempts
 
-    async def chapter_page(self, request: Request, context: dict[str, Any] = {}) -> Response:
+    async def chapter_page(
+        self, request: Request, context: dict[str, Any] = {}
+    ) -> Response:
         session: AsyncSession = request.scope["db"]
         user: User = request.scope["user"]
 
@@ -154,47 +168,46 @@ class BaseChapter(Generic[Variant]):
         attempts = await self.get_attempts(request)
 
         if self.need_report:
-            last_report = (await session.scalars(
-                select(Report)
+            last_report = (
+                await session.scalars(
+                    select(Report)
                     .where(Report.user_id == user.id)
                     .where(Report.chapter == self.slug)
                     .order_by(Report.submitted.desc())
-            )).first()
+                )
+            ).first()
 
             report_form = await ReportForm.from_formdata(
                 request,
                 prefix="report",
-                data={"report": last_report and last_report.text}
+                data={"report": last_report and last_report.text},
             )
 
             if report_form.submit.data:
                 if await report_form.validate_on_submit():
                     report = Report(
-                        user_id=user.id,
-                        chapter=self.slug,
-                        text=report_form.report.data
+                        user_id=user.id, chapter=self.slug, text=report_form.report.data
                     )
                     session.add(report)
 
-                    return RedirectResponse(f"{request.url_for(f'networking:{self.slug}:page')}#report", status_code=303)
+                    return RedirectResponse(
+                        f"{request.url_for(f'networking:{self.slug}:page')}#report",
+                        status_code=303,
+                    )
 
             context.update(
                 report=report_form,
-                last_report_time=last_report and last_report.submitted
+                last_report_time=last_report and last_report.submitted,
             )
             context["report"] = report_form
 
         chapter_result = self.calculate_score(
-            attempts,
-            False if user.exam is None else user.exam.has_debt
+            attempts, False if user.exam is None else user.exam.has_debt
         )
 
         context.update(
             variant=await self.get_variant(request),
-            tasks={
-                result.task.slug: result
-                for result in chapter_result.results
-            },
+            tasks={result.task.slug: result for result in chapter_result.results},
             chapter=chapter_result,
             clear_progress=ClearProgressForm(request, prefix="clear-progress"),
         )
@@ -210,13 +223,15 @@ class BaseChapter(Generic[Variant]):
 
             await session.execute(
                 update(Attempt)
-                    .where(Attempt.is_correct == true())
-                    .where(Attempt.chapter == self.slug)
-                    .where(Attempt.user_id == user.id)
-                    .values(is_correct=False)
+                .where(Attempt.is_correct == true())
+                .where(Attempt.chapter == self.slug)
+                .where(Attempt.user_id == user.id)
+                .values(is_correct=False)
             )
 
-        return RedirectResponse(request.url_for(f"networking:{self.slug}:page"), status_code=303)
+        return RedirectResponse(
+            request.url_for(f"networking:{self.slug}:page"), status_code=303
+        )
 
 
 __all__ = ["BaseChapter", "ChapterTaskResult"]

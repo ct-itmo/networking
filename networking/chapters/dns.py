@@ -34,7 +34,12 @@ class DNSVariant:
     subdomain: str
     subip6: IPAddress
 
-    async def check_dns(self, _session: AsyncSession, _meta: DockerMeta, _containers: list[DockerContainer]) -> None:
+    async def check_dns(
+        self,
+        _session: AsyncSession,
+        _meta: DockerMeta,
+        _containers: list[DockerContainer],
+    ) -> None:
         # Empty, all points are passed from the bot
         ...
 
@@ -42,9 +47,13 @@ class DNSVariant:
         rnd = Random(f"{SECRET_SEED}-{user_id}-dns")
 
         self.domain = f"{''.join(rnd.choice(string.ascii_lowercase + string.digits) for _ in range(10))}.localnetwork"
-        self.subdomain = "".join(rnd.choice(string.ascii_lowercase + string.digits) for _ in range(5))
+        self.subdomain = "".join(
+            rnd.choice(string.ascii_lowercase + string.digits) for _ in range(5)
+        )
         self.ip4 = util.generate_address(rnd, IPNetwork("10.52.1.128/25"))
-        self.ip6, self.subip6 = util.generate_distinct(2, util.generate_address, rnd, IPNetwork("fd44:1337::/64"))
+        self.ip6, self.subip6 = util.generate_distinct(
+            2, util.generate_address, rnd, IPNetwork("fd44:1337::/64")
+        )
 
         self.deployment = Deployment(
             containers=[
@@ -57,8 +66,8 @@ class DNSVariant:
                     environment={
                         "DOMAIN": self.domain,
                         "IP4": str(self.ip4),
-                        "IP6": str(self.ip6)
-                    }
+                        "IP6": str(self.ip6),
+                    },
                 ),
                 ContainerMeta(
                     name="subdomain",
@@ -67,38 +76,42 @@ class DNSVariant:
                     mem_limit=16 * 1024 * 1024,
                     environment={
                         "DOMAIN": f"{self.subdomain}.{self.domain}",
-                        "IP6": str(self.subip6)
-                    }
-                )
+                        "IP6": str(self.subip6),
+                    },
+                ),
             ],
-            networks=[
-                NetworkMeta(name="internal")
-            ]
+            networks=[NetworkMeta(name="internal")],
         )
 
         self.form_classes = [
             RegexpForm.make_task("ip", answer=re.compile(DNS_REGEXP_IP, re.I)),
-            RegexpForm.make_task("servers", answer=re.compile(DNS_REGEXP_SERVERS, re.I))
+            RegexpForm.make_task(
+                "servers", answer=re.compile(DNS_REGEXP_SERVERS, re.I)
+            ),
         ]
 
         self.checks = {
-            "dns": Check([
-                ContainerMeta(
-                    name="bot",
-                    image="ct-itmo/labs-networking-dns-bot",
-                    networks={"internal": None},
-                    ipv6_forwarding=False,
-                    volumes=util.socket_volume(),
-                    environment={
-                        "DOMAIN": self.domain,
-                        "SUBDOMAIN": f"{self.subdomain}.{self.domain}",
-                        "IP4": str(self.ip4),
-                        "IP6": str(self.ip6),
-                        "SUBIP6": str(self.subip6),
-                        "BOX_IP": "10.52.1.2"
-                    }
-                )
-            ], { 0: "/out/dns.log" }, self.check_dns)
+            "dns": Check(
+                [
+                    ContainerMeta(
+                        name="bot",
+                        image="ct-itmo/labs-networking-dns-bot",
+                        networks={"internal": None},
+                        ipv6_forwarding=False,
+                        volumes=util.socket_volume(),
+                        environment={
+                            "DOMAIN": self.domain,
+                            "SUBDOMAIN": f"{self.subdomain}.{self.domain}",
+                            "IP4": str(self.ip4),
+                            "IP6": str(self.ip6),
+                            "SUBIP6": str(self.subip6),
+                            "BOX_IP": "10.52.1.2",
+                        },
+                    )
+                ],
+                {0: "/out/dns.log"},
+                self.check_dns,
+            )
         }
 
 
@@ -113,7 +126,7 @@ class DNSChapter(CheckableMixin, DockerMixin, FormMixin, BaseChapter[DNSVariant]
         ChapterTask("authoritative", "Авторитетный сервер", Decimal(2)),
         ChapterTask("mail", "Почта", Decimal(1)),
         ChapterTask("subdomain", "Поддомен", Decimal(1)),
-        ChapterTask("transfer", "Трансфер", Decimal(2))
+        ChapterTask("transfer", "Трансфер", Decimal(2)),
     ]
 
     @util.scope_cached("variant")

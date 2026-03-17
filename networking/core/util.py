@@ -29,30 +29,40 @@ def generate_mac(rnd: Random) -> EUI:
 
 def generate_subnet(rnd: Random, network: IPNetwork, new_prefix_len: int) -> IPNetwork:
     bit_count = new_prefix_len - network.prefixlen
-    assert(bit_count >= 0)
+    assert bit_count >= 0
 
     if bit_count == 0:
         return network
 
-    new_addr = network.first | (rnd.getrandbits(bit_count) << (get_address_size(network) - new_prefix_len))
+    new_addr = network.first | (
+        rnd.getrandbits(bit_count) << (get_address_size(network) - new_prefix_len)
+    )
 
     return IPNetwork((new_addr, new_prefix_len), version=network.version)
 
 
-def generate_address(rnd: Random, network: IPNetwork, no_gateway: bool = False) -> IPAddress:
+def generate_address(
+    rnd: Random, network: IPNetwork, no_gateway: bool = False
+) -> IPAddress:
     bit_count = get_address_size(network) - network.prefixlen
     if bit_count == 0:
         return network.ip
 
     entropy = rnd.getrandbits(bit_count)
     if bit_count > 1:
-        while entropy == 0 or entropy == (1 << bit_count) - 1 or (no_gateway and entropy == 1):
+        while (
+            entropy == 0
+            or entropy == (1 << bit_count) - 1
+            or (no_gateway and entropy == 1)
+        ):
             entropy = rnd.getrandbits(bit_count)
 
     return IPAddress(network.first | entropy, version=network.version)
 
 
-def generate_distinct(n: int, func: Callable[Args, T], *args: Args.args, **kwargs: Args.kwargs) -> tuple[T, ...]:
+def generate_distinct(
+    n: int, func: Callable[Args, T], *args: Args.args, **kwargs: Args.kwargs
+) -> tuple[T, ...]:
     while True:
         results = tuple(func(*args, **kwargs) for _ in range(n))
         if len(set(results)) == n:
@@ -79,18 +89,25 @@ def scope_cached(key: str):
                         request = arg
                         break
                 else:
-                    raise TypeError("scope_cached() can be applied only to functions containing Request")
-            
+                    raise TypeError(
+                        "scope_cached() can be applied only to functions containing Request"
+                    )
+
             if key not in request.scope:
                 request.scope[key] = await func(*args, **kwargs)
 
             return request.scope[key]
 
         return wrapper
+
     return inner
 
 
 __all__ = [
-    "generate_mac", "generate_subnet", "generate_address", "generate_distinct",
-    "socket_volume", "scope_cached"
+    "generate_mac",
+    "generate_subnet",
+    "generate_address",
+    "generate_distinct",
+    "socket_volume",
+    "scope_cached",
 ]

@@ -28,27 +28,37 @@ async def main_page(request: Request) -> Response:
     user: User = request.scope["user"]
     session: AsyncSession = request.scope["db"]
 
-    attempts = (await session.scalars(
-        select(Attempt)
+    attempts = (
+        await session.scalars(
+            select(Attempt)
             .where(Attempt.user_id == user.id)
             .order_by(Attempt.chapter, Attempt.task, Attempt.submitted.desc())
-    )).all()
+        )
+    ).all()
 
     exam: Exam | None = user.exam
 
     user_chapters = [
         chapter.calculate_score(
             [attempt for attempt in attempts if attempt.chapter == chapter.slug],
-            False if exam is None else exam.has_debt
+            False if exam is None else exam.has_debt,
         )
         for chapter in chapters
         if not chapter.private
     ]
 
-    overall_chapter_score = sum((chapter.score for chapter in user_chapters), Decimal(0))
-    total_chapter_score = sum((chapter.total_score for chapter in user_chapters), Decimal(0))
+    overall_chapter_score = sum(
+        (chapter.score for chapter in user_chapters), Decimal(0)
+    )
+    total_chapter_score = sum(
+        (chapter.total_score for chapter in user_chapters), Decimal(0)
+    )
 
-    overall_score = overall_chapter_score if exam is None else exam.calculate_points(overall_chapter_score)
+    overall_score = (
+        overall_chapter_score
+        if exam is None
+        else exam.calculate_points(overall_chapter_score)
+    )
 
     return TemplateResponse(
         request,
@@ -57,8 +67,8 @@ async def main_page(request: Request) -> Response:
             "chapters": user_chapters,
             "overall_chapter_score": overall_chapter_score,
             "total_chapter_score": total_chapter_score,
-            "overall_score": overall_score
-        }
+            "overall_score": overall_score,
+        },
     )
 
 
@@ -73,7 +83,9 @@ class UserScore:
 
 
 async def scoreboard_guest(request: Request) -> Response:
-    if SCOREBOARD_TOKEN is None or request.query_params.get("token") != str(SCOREBOARD_TOKEN):
+    if SCOREBOARD_TOKEN is None or request.query_params.get("token") != str(
+        SCOREBOARD_TOKEN
+    ):
         raise HTTPException(403)
 
     return await scoreboard(request)
@@ -83,49 +95,61 @@ async def scoreboard_admin(request: Request) -> Response:
     user: User = request.scope["user"]
     if not user.is_admin:
         raise HTTPException(403)
-    
+
     return await scoreboard(request)
 
 
 async def scoreboard(request: Request) -> Response:
     session: AsyncSession = request.scope["db"]
 
-    users = (await session.scalars(
-        select(User).order_by(User.id).options(joinedload(
-            User.exam  # type: ignore
-        ))
-    )).all()
+    users = (
+        await session.scalars(
+            select(User)
+            .order_by(User.id)
+            .options(
+                joinedload(
+                    User.exam  # type: ignore
+                )
+            )
+        )
+    ).all()
 
-    attempts = (await session.scalars(
-        select(Attempt).order_by(Attempt.user_id, Attempt.chapter, Attempt.task, Attempt.submitted.desc())
-    )).all()
+    attempts = (
+        await session.scalars(
+            select(Attempt).order_by(
+                Attempt.user_id, Attempt.chapter, Attempt.task, Attempt.submitted.desc()
+            )
+        )
+    ).all()
 
     grouped_attempts = {
         user_id: {
             chapter: list(chapter_attempts)
-            for chapter, chapter_attempts in itertools.groupby(user_attempts, key=lambda attempt: attempt.chapter)
+            for chapter, chapter_attempts in itertools.groupby(
+                user_attempts, key=lambda attempt: attempt.chapter
+            )
         }
-        for user_id, user_attempts in itertools.groupby(attempts, key=lambda attempt: attempt.user_id)
+        for user_id, user_attempts in itertools.groupby(
+            attempts, key=lambda attempt: attempt.user_id
+        )
     }
 
     users_with_chapters = [
-        UserScore(user, [
-            chapter.calculate_score(
-                grouped_attempts.get(user.id, {}).get(chapter.slug, []),
-                False if user.exam is None else user.exam.has_debt
-            )
-            for chapter in chapters
-        ])
+        UserScore(
+            user,
+            [
+                chapter.calculate_score(
+                    grouped_attempts.get(user.id, {}).get(chapter.slug, []),
+                    False if user.exam is None else user.exam.has_debt,
+                )
+                for chapter in chapters
+            ],
+        )
         for user in users
     ]
 
     return TemplateResponse(
-        request,
-        "scoreboard.html",
-        {
-            "chapters": chapters,
-            "users": users_with_chapters
-        }
+        request, "scoreboard.html", {"chapters": chapters, "users": users_with_chapters}
     )
 
 
@@ -137,13 +161,17 @@ async def setup_page(request: Request) -> Response:
 # TODO: common route for files
 async def vpn_linux(request: Request) -> Response:
     return RedirectResponse(
-        await s3.get_url(s3.S3_DEFAULT_BUCKET, "vpn", request.scope["user"].id, "config-linux.ovpn")
+        await s3.get_url(
+            s3.S3_DEFAULT_BUCKET, "vpn", request.scope["user"].id, "config-linux.ovpn"
+        )
     )
 
 
 async def vpn_win(request: Request) -> Response:
     return RedirectResponse(
-        await s3.get_url(s3.S3_DEFAULT_BUCKET, "vpn", request.scope["user"].id, "config-win.ovpn")
+        await s3.get_url(
+            s3.S3_DEFAULT_BUCKET, "vpn", request.scope["user"].id, "config-win.ovpn"
+        )
     )
 
 
@@ -158,19 +186,17 @@ def get_user_mount():
                 routes=[
                     Route("/", setup_page, name="setup"),
                     Route("/win", vpn_win, name="win"),
-                    Route("/linux", vpn_linux, name="linux")
+                    Route("/linux", vpn_linux, name="linux"),
                 ],
-                name="vpn"
-            )
-        ] + [
-            chapter.get_mount()
-            for chapter in chapters
-        ],
+                name="vpn",
+            ),
+        ]
+        + [chapter.get_mount() for chapter in chapters],
         middleware=[
             Middleware(AuthenticationMiddleware),
-            Middleware(LoadMetaMiddleware)
+            Middleware(LoadMetaMiddleware),
         ],
-        name="networking"
+        name="networking",
     )
 
 
@@ -193,7 +219,7 @@ def get_mount():
             Route("/scoreboard/guest", scoreboard_guest, name="scoreboard_guest"),
             Route("/api/signature", api_signature, name="signature"),
             get_user_mount(),
-        ]
+        ],
     )
 
 

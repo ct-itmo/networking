@@ -26,12 +26,7 @@ from networking.core.model import Log
 
 logger = logging.getLogger(__name__)
 
-CHECK_TIMEOUT = ClientTimeout(
-    total=30,
-    connect=30,
-    sock_read=30,
-    sock_connect=30
-)
+CHECK_TIMEOUT = ClientTimeout(total=30, connect=30, sock_read=30, sock_connect=30)
 
 
 def check_default_log_joiner(container_logs: dict[int, str]) -> str:
@@ -45,7 +40,10 @@ class Check:
     logs: dict[int, str]
     # Third argument is a variant itself
     # TODO: get rid of Any here
-    check: Callable[[AsyncSession, DockerMeta, list[DockerContainer]], Awaitable[None]] | None = None
+    check: (
+        Callable[[AsyncSession, DockerMeta, list[DockerContainer]], Awaitable[None]]
+        | None
+    ) = None
     logs_joiner: Callable[[dict[int, str]], str] = check_default_log_joiner
 
 
@@ -56,10 +54,8 @@ class CheckableTaskProtocol(Protocol):
 class CheckableMixin(BaseChapter[CheckableTaskProtocol]):
     def __init__(self):
         super().__init__()
-        self.routes += [
-            Route("/check", self.check, name="check", methods=["POST"])
-        ]
-    
+        self.routes += [Route("/check", self.check, name="check", methods=["POST"])]
+
     async def check(self, request: Request) -> Response:
         session: AsyncSession = request.scope["db"]
         user: User = request.scope["user"]
@@ -72,7 +68,9 @@ class CheckableMixin(BaseChapter[CheckableTaskProtocol]):
         form = await request.form()
         check = form.get("check")
         if not isinstance(check, str) or check not in variant.checks:
-            return RedirectResponse(request.url_for(f"networking:{self.slug}:page"), status_code=303)
+            return RedirectResponse(
+                request.url_for(f"networking:{self.slug}:page"), status_code=303
+            )
 
         try:
             meta = await lock_meta(session, user.id, self.slug, True)
@@ -80,11 +78,23 @@ class CheckableMixin(BaseChapter[CheckableTaskProtocol]):
         except DockerConflict:
             task = None
 
-        return RedirectResponse(f"{request.url_for(f'networking:{self.slug}:page')}#{check}", status_code=303, background=task)
+        return RedirectResponse(
+            f"{request.url_for(f'networking:{self.slug}:page')}#{check}",
+            status_code=303,
+            background=task,
+        )
 
-    async def check_task(self, session: AsyncSession, meta: DockerMeta, check_name: str, variant: CheckableTaskProtocol) -> None:
+    async def check_task(
+        self,
+        session: AsyncSession,
+        meta: DockerMeta,
+        check_name: str,
+        variant: CheckableTaskProtocol,
+    ) -> None:
         check = variant.checks[check_name]
-        containers = [await run_container(meta, container) for container in check.containers]
+        containers = [
+            await run_container(meta, container) for container in check.containers
+        ]
 
         async with aiodocker.Docker() as client:
             # TODO: get rid of monkey-patch (how?)
@@ -92,7 +102,9 @@ class CheckableMixin(BaseChapter[CheckableTaskProtocol]):
                 container.docker = client
 
             try:
-                await asyncio.gather(*[container.wait(timeout=25) for container in containers])
+                await asyncio.gather(
+                    *[container.wait(timeout=25) for container in containers]
+                )
             except Exception:
                 # If got timeout, try to do something anyway
                 logger.warning("Timed out when waiting for check %s", check_name)
@@ -140,19 +152,27 @@ class CheckableMixin(BaseChapter[CheckableTaskProtocol]):
         user: User = request.scope["user"]
         session: AsyncSession = request.scope["db"]
 
-        window = func.row_number().over(
-            partition_by=(Log.chapter, Log.check),
-            order_by=Log.created.desc(),
-        ).label("row")
+        window = (
+            func.row_number()
+            .over(
+                partition_by=(Log.chapter, Log.check),
+                order_by=Log.created.desc(),
+            )
+            .label("row")
+        )
 
         subquery = select(Log, window).where(Log.user_id == user.id).alias("sq")
         log_entity = aliased(Log, subquery)
 
-        logs = (await session.scalars(select(log_entity).where(subquery.c.row == 1))).all()
+        logs = (
+            await session.scalars(select(log_entity).where(subquery.c.row == 1))
+        ).all()
 
         return {log.check: log for log in logs}
 
-    async def chapter_page(self, request: Request, context: dict[str, Any] = {}) -> Response:
+    async def chapter_page(
+        self, request: Request, context: dict[str, Any] = {}
+    ) -> Response:
         context["logs"] = await self.get_logs(request)
         return await super().chapter_page(request, context)
 

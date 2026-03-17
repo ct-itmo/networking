@@ -23,19 +23,20 @@ async def add_attempt(request: Request) -> Response:
     chapter = request.query_params.get("chapter")
     task = request.query_params.get("task")
 
-    if not user_id or not user_id.isdigit() or \
-        not chapter or not chapter.isidentifier() or \
-        not task or not task.isidentifier():
+    if (
+        not user_id
+        or not user_id.isdigit()
+        or not chapter
+        or not chapter.isidentifier()
+        or not task
+        or not task.isidentifier()
+    ):
         return PlainTextResponse("Bad request", status_code=400)
 
     session: AsyncSession = request.scope["db"]
     try:
         attempt = Attempt(
-            user_id=int(user_id),
-            chapter=chapter,
-            task=task,
-            data={},
-            is_correct=True
+            user_id=int(user_id), chapter=chapter, task=task, data={}, is_correct=True
         )
         session.add(attempt)
         await session.commit()
@@ -54,9 +55,7 @@ def build_app() -> Starlette:
         middleware=[
             Middleware(DatabaseMiddleware, url=config.DATABASE_URL, create_tables=True)
         ],
-        routes=[
-            Route("/done", add_attempt, methods=["POST"])
-        ]
+        routes=[Route("/done", add_attempt, methods=["POST"])],
     )
 
 
@@ -65,7 +64,7 @@ if __name__ == "__main__":
         "networking.core.socket:build_app",
         factory=True,
         uds=SOCKET_PATH,
-        reload=config.DEBUG
+        reload=config.DEBUG,
     )
 
 

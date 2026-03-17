@@ -12,7 +12,12 @@ from quirck.box.meta import Deployment, ContainerMeta, NetworkMeta
 from networking.core import util
 from networking.core.chapter.base import BaseChapter, ChapterTask
 from networking.core.chapter.docker import DockerMixin
-from networking.core.chapter.form import FormMixin, BaseTaskForm, RegexpForm, SingleTaskForm
+from networking.core.chapter.form import (
+    FormMixin,
+    BaseTaskForm,
+    RegexpForm,
+    SingleTaskForm,
+)
 from networking.core.config import SECRET_SEED
 
 
@@ -40,10 +45,14 @@ class IPVariant:
         self.ll_mac = util.generate_mac(rnd)
 
         ip4_network = util.generate_subnet(rnd, IPNetwork("10.0.0.0/8"), 24)
-        self.ip4_client, self.ip4_server = util.generate_distinct(2, util.generate_address, rnd, ip4_network)
+        self.ip4_client, self.ip4_server = util.generate_distinct(
+            2, util.generate_address, rnd, ip4_network
+        )
 
         ip6_network = util.generate_subnet(rnd, IPNetwork("fd33::/16"), 64)
-        self.ip6_client, self.ip6_server = util.generate_distinct(2, util.generate_address, rnd, ip6_network)
+        self.ip6_client, self.ip6_server = util.generate_distinct(
+            2, util.generate_address, rnd, ip6_network
+        )
 
         mtu = rnd.randint(1000, 1100)
 
@@ -61,9 +70,9 @@ class IPVariant:
                         "BOX_IP": str(self.ip4_server),
                         "STUDENT_IP": str(self.ip4_client),
                         "CHAPTER": "ip",
-                        "TASK": "ping4"
+                        "TASK": "ping4",
                     },
-                    volumes=util.socket_volume()
+                    volumes=util.socket_volume(),
                 ),
                 ContainerMeta(
                     name="ping-ll",
@@ -72,9 +81,9 @@ class IPVariant:
                     environment={
                         "STUDENT_IP": "any",
                         "CHAPTER": "ip",
-                        "TASK": "ping_ll"
+                        "TASK": "ping_ll",
                     },
-                    volumes=util.socket_volume()
+                    volumes=util.socket_volume(),
                 ),
                 ContainerMeta(
                     name="ping6",
@@ -85,21 +94,23 @@ class IPVariant:
                         "STUDENT_IP": str(self.ip6_client),
                         "MTU": str(mtu),
                         "CHAPTER": "ip",
-                        "TASK": "ping6"
+                        "TASK": "ping6",
                     },
-                    volumes=util.socket_volume()
-                )
+                    volumes=util.socket_volume(),
+                ),
             ],
-            networks=[
-                NetworkMeta(name="internal")
-            ]
+            networks=[NetworkMeta(name="internal")],
         )
 
         self.form_classes = [
             NetcalcForm.make_task("netcalc"),
-            RegexpForm.make_task("mac4", answer=re.compile(f"^{str(mac4).replace('-', '[-:]?')}$", re.I)),
-            RegexpForm.make_task("mac6", answer=re.compile(f"^{str(mac6).replace('-', '[-:]?')}$", re.I)),
-            RegexpForm.make_task("mtu", answer=re.compile(f"^{mtu}$", re.I))
+            RegexpForm.make_task(
+                "mac4", answer=re.compile(f"^{str(mac4).replace('-', '[-:]?')}$", re.I)
+            ),
+            RegexpForm.make_task(
+                "mac6", answer=re.compile(f"^{str(mac6).replace('-', '[-:]?')}$", re.I)
+            ),
+            RegexpForm.make_task("mtu", answer=re.compile(f"^{mtu}$", re.I)),
         ]
 
 
@@ -114,7 +125,7 @@ class IPChapter(DockerMixin, FormMixin, BaseChapter[IPVariant]):
         ChapterTask("ping_ll", "Link-local", Decimal(2)),
         ChapterTask("ping6", "IPv6-пинг", Decimal(1)),
         ChapterTask("mac6", "MAC-адрес (v6)", Decimal(1)),
-        ChapterTask("mtu", "MTU", Decimal(2))
+        ChapterTask("mtu", "MTU", Decimal(2)),
     ]
 
     @util.scope_cached("variant")
