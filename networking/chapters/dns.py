@@ -9,7 +9,7 @@ from netaddr import IPAddress, IPNetwork
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
-from quirck.box.meta import Deployment, ContainerMeta, NetworkMeta
+from quirck.box.meta import ContainerNetworkMeta, Deployment, ContainerMeta, NetworkMeta
 from quirck.box.model import DockerMeta
 from quirck.core.config import config
 
@@ -61,7 +61,7 @@ class DNSVariant:
                 ContainerMeta(
                     name="domain",
                     image="ct-itmo/labs-networking-nginx",
-                    networks={"internal": None},
+                    networks=[ContainerNetworkMeta(network_name="internal")],
                     mem_limit=16 * 1024 * 1024,
                     environment={
                         "DOMAIN": self.domain,
@@ -72,7 +72,7 @@ class DNSVariant:
                 ContainerMeta(
                     name="subdomain",
                     image="ct-itmo/labs-networking-nginx",
-                    networks={"internal": None},
+                    networks=[ContainerNetworkMeta(network_name="internal")],
                     mem_limit=16 * 1024 * 1024,
                     environment={
                         "DOMAIN": f"{self.subdomain}.{self.domain}",
@@ -96,7 +96,7 @@ class DNSVariant:
                     ContainerMeta(
                         name="bot",
                         image="ct-itmo/labs-networking-dns-bot",
-                        networks={"internal": None},
+                        networks=[ContainerNetworkMeta(network_name="internal")],
                         ipv6_forwarding=False,
                         volumes=util.socket_volume(),
                         environment={

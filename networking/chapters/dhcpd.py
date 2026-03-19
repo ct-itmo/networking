@@ -9,7 +9,7 @@ from netaddr import IPNetwork, AddrFormatError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
-from quirck.box.meta import Deployment, ContainerMeta, NetworkMeta
+from quirck.box.meta import ContainerNetworkMeta, Deployment, ContainerMeta, NetworkMeta
 from quirck.box.model import DockerMeta
 
 from networking.core import util
@@ -103,7 +103,13 @@ class DHCPDVariant:
                     ContainerMeta(
                         name="bot",
                         image="ct-itmo/labs-networking-dhcpd-bot",
-                        networks={"internal": str(host_mac)},
+                        networks=[
+                            ContainerNetworkMeta(
+                                network_name="internal",
+                                mac_address=str(host_mac),
+                                sysctls=["net.ipv4.conf.IFACE.promote_secondaries=1"]
+                            )
+                        ],
                         ipv6_forwarding=False,
                     )
                 ],

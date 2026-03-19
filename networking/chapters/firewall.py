@@ -10,7 +10,7 @@ from netaddr import IPAddress, IPNetwork
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
-from quirck.box.meta import Deployment, ContainerMeta, NetworkMeta
+from quirck.box.meta import ContainerNetworkMeta, Deployment, ContainerMeta, NetworkMeta
 from quirck.box.model import DockerMeta
 
 from networking.core import util
@@ -207,11 +207,12 @@ class FirewallVariant:
             return ContainerMeta(
                 name="check-" + name,
                 image="ct-itmo/labs-networking-firewall-checker",
-                networks={
-                    "internal" + network_type: str(
-                        mac_a_checker if network_type == "A" else mac_b_checker
+                networks=[
+                    ContainerNetworkMeta(
+                        network_name="internal" + network_type,
+                        mac_address=str(mac_a_checker if network_type == "A" else mac_b_checker)
                     )
-                },
+                ],
                 ipv6_forwarding=False,
                 environment={**env, **environment},
                 volumes=util.socket_volume() if add_socket_volume else {},
@@ -223,7 +224,7 @@ class FirewallVariant:
                 ContainerMeta(
                     name="client-a",
                     image="ct-itmo/labs-networking-firewall-client",
-                    networks={"internalA": str(mac_a_client)},
+                    networks=[ContainerNetworkMeta(network_name="internalA", mac_address=str(mac_a_client))],
                     environment={
                         "BOX_IP": str(self.ip4_a_client),
                         "BOX_IP2": str(self.ip4_a_client2),
@@ -238,7 +239,7 @@ class FirewallVariant:
                 ContainerMeta(
                     name="client-b",
                     image="ct-itmo/labs-networking-firewall-client",
-                    networks={"internalB": str(mac_b_client)},
+                    networks=[ContainerNetworkMeta(network_name="internalB", mac_address=str(mac_b_client))],
                     environment={
                         "BOX_IP": str(self.ip4_b_client),
                         "BOX_GATEWAY": str(self.ip4_b_firewall),
@@ -387,7 +388,7 @@ class FirewallVariant:
                     ContainerMeta(
                         name="check-udp-ports-b-client",
                         image="ct-itmo/labs-networking-firewall-client",
-                        networks={"internalB": str(mac_b_client2)},
+                        networks=[ContainerNetworkMeta(network_name="internalB", mac_address=str(mac_b_client2))],
                         ipv6_forwarding=False,
                         environment={
                             "BOX_IP": str(self.ip4_b_client2),

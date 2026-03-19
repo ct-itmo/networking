@@ -7,7 +7,7 @@ from netaddr import EUI, IPAddress, IPNetwork
 from starlette.requests import Request
 from wtforms.fields import BooleanField
 
-from quirck.box.meta import Deployment, ContainerMeta, NetworkMeta
+from quirck.box.meta import ContainerNetworkMeta, Deployment, ContainerMeta, NetworkMeta
 
 from networking.core import util
 from networking.core.chapter.base import BaseChapter, ChapterTask
@@ -65,7 +65,7 @@ class IPVariant:
                 ContainerMeta(
                     name="ping4",
                     image="ct-itmo/labs-networking-ping",
-                    networks={"internal": str(mac4)},
+                    networks=ContainerNetworkMeta(network_name="internal", mac_address=str(mac4)),
                     environment={
                         "BOX_IP": str(self.ip4_server),
                         "STUDENT_IP": str(self.ip4_client),
@@ -77,7 +77,7 @@ class IPVariant:
                 ContainerMeta(
                     name="ping-ll",
                     image="ct-itmo/labs-networking-ping",
-                    networks={"internal": str(self.ll_mac)},
+                    networks=ContainerNetworkMeta(network_name="internal", mac_address=str(self.ll_mac)),
                     environment={
                         "STUDENT_IP": "any",
                         "CHAPTER": "ip",
@@ -88,7 +88,7 @@ class IPVariant:
                 ContainerMeta(
                     name="ping6",
                     image="ct-itmo/labs-networking-ping",
-                    networks={"internal": str(mac6)},
+                    networks=ContainerNetworkMeta(network_name="internal", mac_address=str(mac6)),
                     environment={
                         "BOX_IP": str(self.ip6_server),
                         "STUDENT_IP": str(self.ip6_client),

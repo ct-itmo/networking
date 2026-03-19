@@ -7,7 +7,7 @@ from random import Random
 from netaddr import IPNetwork
 from starlette.requests import Request
 
-from quirck.box.meta import Deployment, ContainerMeta, NetworkMeta
+from quirck.box.meta import ContainerNetworkMeta, Deployment, ContainerMeta, NetworkMeta
 
 from networking.core import util
 from networking.core.chapter.base import BaseChapter, ChapterTask
@@ -90,7 +90,7 @@ class DHCPVariant:
                 ContainerMeta(
                     name="dnsmasq",
                     image="ct-itmo/labs-networking-dhcp-dnsmasq",
-                    networks={"internal": str(dnsmasq_mac)},
+                    networks=[ContainerNetworkMeta(network_name="internal", mac_address=str(dnsmasq_mac))],
                     environment={
                         "ADDRESS4": str(ip4_net.network + 254),
                         "ADDRESS6_1": str(dnsmasq_mac.ipv6(slaac_net.value or 0)),
@@ -106,7 +106,7 @@ class DHCPVariant:
                 ContainerMeta(
                     name="nsd",
                     image="ct-itmo/labs-networking-dhcp-nsd",
-                    networks={"internal": None},
+                    networks=[ContainerNetworkMeta(network_name="internal")],
                     environment={
                         "HOSTIP": str(dns_ip),
                         "DOMAIN": self.http_domain,
@@ -118,7 +118,7 @@ class DHCPVariant:
                 ContainerMeta(
                     name="ping",
                     image="ct-itmo/labs-networking-ping",
-                    networks={"internal": str(ping_mac)},
+                    networks=[ContainerNetworkMeta(network_name="internal", mac_address=str(ping_mac))],
                     environment={
                         "STUDENT_IP": "any",
                         "CHAPTER": "dhcp",
@@ -130,7 +130,7 @@ class DHCPVariant:
                 ContainerMeta(
                     name="http",
                     image="ct-itmo/labs-networking-dhcp-http",
-                    networks={"internal": str(http_mac)},
+                    networks=[ContainerNetworkMeta(network_name="internal", mac_address=str(http_mac))],
                     environment={
                         "BIND": f"[{http_ip}]:9229",
                         "HOST": f"{self.http_domain}.localnetwork:9229",
