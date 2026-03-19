@@ -107,7 +107,7 @@ class DHCPDVariant:
                             ContainerNetworkMeta(
                                 network_name="internal",
                                 mac_address=str(host_mac),
-                                sysctls=["net.ipv4.conf.IFACE.promote_secondaries=1"]
+                                sysctls=["net.ipv4.conf.IFNAME.promote_secondaries=1"]
                             )
                         ],
                         ipv6_forwarding=False,
