@@ -1,4 +1,4 @@
-FROM golang:1.26-trixie as build
+FROM golang:1.26-trixie AS build
 
 WORKDIR /build
 COPY ./go.mod ./go.mod
