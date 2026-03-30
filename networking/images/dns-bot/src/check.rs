@@ -30,9 +30,10 @@ impl Query {
     }
 
     pub async fn execute(&self, client: &mut Client) -> Result<DnsResponse, Error> {
+        info!("Sending query: {} {}", self.record_type, self.name);
         let query = client.query(self.name.clone(), DNSClass::IN, self.record_type);
         let response = query.await?;
-        info!("{:?}\n{:#?}", response.queries(), response.answers());
+        info!("Response: {:#?}", response.answers());
         Ok(response)
     }
 }
@@ -208,7 +209,7 @@ impl<'u> UdpChecker<'u> {
     }
 
     pub async fn check_authoritative(&mut self) -> Result<(), Error> {
-        let domain = std::env::var("DOMAIN")?;
+        let domain = Self::normalize_name(std::env::var("DOMAIN")?);
         let ip4 = std::env::var("IP4")?;
         let ip6 = std::env::var("IP6")?;
 
@@ -259,8 +260,8 @@ impl<'u> UdpChecker<'u> {
 
         let test3 = SoaTest::new(
             domain.as_str(),
-            format!("ns.{}.", domain).as_str(),
-            format!("noreply.{}.", domain).as_str(),
+            format!("ns.{}", domain).as_str(),
+            format!("noreply.{}", domain).as_str(),
         )?;
         test3.check(&mut self.udp_client).await?;
 
@@ -275,6 +276,14 @@ impl<'u> UdpChecker<'u> {
 
         self.lab_client.submit("subdomain").await?;
         Ok(())
+    }
+
+    fn normalize_name(name: String) -> String {
+        if name.ends_with('.') {
+            name.to_string()
+        } else {
+            format!("{}.", name)
+        }
     }
 }
 
