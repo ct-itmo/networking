@@ -9,16 +9,11 @@ dependencies = [
     "quirck",
 ]
 
-[tool.uv.workspace]
-members = [
-    "quirck",
-]
-
 [tool.uv.sources]
-quirck = { workspace = true, editable = true }
+quirck = { path = "./quirck", editable = true }
 
 [build-system]
-requires = ["uv_build>=0.10.9,<0.11.0"]
+requires = ["uv_build>=0.11.2,<0.12.0"]
 build-backend = "uv_build"
 
 [dependency-groups]
