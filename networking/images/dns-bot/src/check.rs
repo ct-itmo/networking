@@ -135,6 +135,14 @@ impl Test for SoaTest {
     }
 }
 
+fn normalize_name(name: String) -> String {
+    if name.ends_with('.') {
+        name.to_string()
+    } else {
+        format!("{}.", name)
+    }
+}
+
 pub struct UdpChecker<'u> {
     udp_client: Client,
     lab_client: &'u LabClient,
@@ -209,7 +217,7 @@ impl<'u> UdpChecker<'u> {
     }
 
     pub async fn check_authoritative(&mut self) -> Result<(), Error> {
-        let domain = Self::normalize_name(std::env::var("DOMAIN")?);
+        let domain = normalize_name(std::env::var("DOMAIN")?);
         let ip4 = std::env::var("IP4")?;
         let ip6 = std::env::var("IP6")?;
 
@@ -230,7 +238,7 @@ impl<'u> UdpChecker<'u> {
     }
 
     pub async fn check_mail(&mut self) -> Result<(), Error> {
-        let domain = std::env::var("DOMAIN")?;
+        let domain = normalize_name(std::env::var("DOMAIN")?);
 
         let test = FullMatchTest::new(
             Query::new(domain.as_str(), RecordType::MX)?,
@@ -243,7 +251,7 @@ impl<'u> UdpChecker<'u> {
     }
 
     pub async fn check_subdomain(&mut self) -> Result<(), Error> {
-        let domain = std::env::var("DOMAIN")?;
+        let domain = normalize_name(std::env::var("DOMAIN")?);
         let ns_domain = format!("ns.{}", domain);
 
         let test1 = FullMatchTest::new(
@@ -265,7 +273,7 @@ impl<'u> UdpChecker<'u> {
         )?;
         test3.check(&mut self.udp_client).await?;
 
-        let subdomain = std::env::var("SUBDOMAIN")?;
+        let subdomain = normalize_name(std::env::var("SUBDOMAIN")?);
         let ip6 = std::env::var("SUBIP6")?;
 
         let test4 = FullMatchTest::new(
@@ -276,14 +284,6 @@ impl<'u> UdpChecker<'u> {
 
         self.lab_client.submit("subdomain").await?;
         Ok(())
-    }
-
-    fn normalize_name(name: String) -> String {
-        if name.ends_with('.') {
-            name.to_string()
-        } else {
-            format!("{}.", name)
-        }
     }
 }
 
@@ -321,11 +321,11 @@ impl<'t> TcpChecker<'t> {
     }
 
     pub async fn check_transfer(&mut self) -> Result<(), Error> {
-        let domain = format!("{}.", std::env::var("DOMAIN")?);
+        let domain = normalize_name(std::env::var("DOMAIN")?);
         let ns_domain = format!("ns.{}", domain);
         let ip4 = std::env::var("IP4")?;
         let ip6 = std::env::var("IP6")?;
-        let subdomain = format!("{}.", std::env::var("SUBDOMAIN")?);
+        let subdomain = normalize_name(std::env::var("SUBDOMAIN")?);
         let subdomain_ip6 = std::env::var("SUBIP6")?;
 
         let query = Query::new(domain.as_str(), RecordType::AXFR)?;
