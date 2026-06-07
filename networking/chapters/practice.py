@@ -13,7 +13,7 @@ class PracticeVariant: ...
 class PracticeChapter(BaseChapter[PracticeVariant]):
     slug = "practice"
     name = "Обжим витой пары"
-    deadline = datetime(2025, 5, 24, 21, 0, 0)
+    deadline = datetime(2026, 6, 30, 21, 0, 0)
     tasks = [ChapterTask("practice", "Практическое задание", Decimal(10))]
     need_report = False
 
