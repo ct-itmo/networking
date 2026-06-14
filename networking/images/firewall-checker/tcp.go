@@ -12,6 +12,15 @@ import (
 const tcpConnectTimeout = time.Millisecond * 500
 const tcpReadTimeout = time.Millisecond * 500
 
+func isTimeoutOrRefused(proto string, addr string, err error) bool {
+	var nerr net.Error
+	if errors.As(err, &nerr) && nerr.Timeout() {
+		fmt.Printf("%s to %s timed out\n", proto, addr)
+		return true
+	}
+	return errors.Is(err, syscall.ECONNREFUSED)
+}
+
 func checkTcp(addr string) (bool, error) {
 	return checkTcpWithContent(addr, "Hello tcp server")
 }
@@ -27,7 +36,7 @@ func checkTcpWithContent(addr string, body string) (bool, error) {
 func sendTcp(addr string, body string) (string, error) {
 	conn, err := net.DialTimeout("tcp", addr, tcpConnectTimeout)
 	if err != nil {
-		if nerr, ok := err.(net.Error); ok && nerr.Timeout() || errors.Is(err, syscall.ECONNREFUSED) {
+		if isTimeoutOrRefused("TCP", addr, err) {
 			return "", nil
 		}
 		fmt.Printf("ERROR: failed to create tcp connection: %v\n", err.Error())
@@ -37,7 +46,7 @@ func sendTcp(addr string, body string) (string, error) {
 	defer conn.Close()
 	_, err = conn.Write([]byte(body))
 	if err != nil {
-		if nerr, ok := err.(net.Error); ok && nerr.Timeout() || errors.Is(err, syscall.ECONNREFUSED) {
+		if isTimeoutOrRefused("TCP", addr, err) {
 			return "", nil
 		}
 		fmt.Printf("ERROR: failed send data using udp: %v\n", err.Error())
@@ -48,7 +57,7 @@ func sendTcp(addr string, body string) (string, error) {
 	conn.SetReadDeadline(time.Now().Add(tcpReadTimeout))
 	receivedLen, err := conn.Read(received)
 	if err != nil {
-		if nerr, ok := err.(net.Error); ok && nerr.Timeout() || errors.Is(err, syscall.ECONNREFUSED) {
+		if isTimeoutOrRefused("TCP", addr, err) {
 			return "", nil
 		}
 		fmt.Printf("ERROR: failed to receive data using udp: %v\n", err.Error())
