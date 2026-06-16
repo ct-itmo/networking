@@ -190,3 +190,60 @@ h1 + .meta {
 .scoreboard td:not(:nth-child(2)) {
     text-align: center;
 }
+
+.question-prompt pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.exam-grade {
+    width: 100%;
+}
+
+.exam-grade td.answer {
+    white-space: normal;
+    max-width: 600px;
+}
+
+.exam-grade td.answer pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+}
+
+.exam-grade .auto-result {
+    color: #666;
+    font-size: 0.8em;
+}
+
+.exam-grade .teacher-note {
+    display: block;
+    margin-top: 0.25em;
+    color: #1a6;
+    font-size: 0.85em;
+}
+
+.exam-grade .grade-cell {
+    white-space: nowrap;
+    text-align: center;
+}
+
+.exam-grade input.grade-input {
+    font-family: 'JetBrains Mono', monospace;
+    width: 5em;
+    text-align: right;
+}
+
+.exam-grade .grade-status {
+    display: inline-block;
+    width: 1.2em;
+    margin-left: 0.3em;
+}
+
+.exam-grade .grade-status.saved {
+    color: green;
+}
+
+.exam-grade .grade-status.error {
+    color: red;
+}

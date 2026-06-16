@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% set title = "Проверка: " + question.label %}
+{% set breadcrumbs = true %}
+{% block main %}
+<article>
+<h1>{{ question.label }} <span class="meta">— до {{ question.points }} балл{{ question.points|ending('а', 'ов', 'ов') }}</span></h1>
+
+<div class="question-prompt">{{ question.prompt|safe }}</div>
+
+<p class="meta">
+    Введите баллы и нажмите <kbd>Enter</kbd> — оценка сохранится, фокус перейдёт на следующий ответ.
+    Для авто-проверяемых вопросов подставлен вычисленный балл (плейсхолдер); измените, если нужно.
+</p>
+
+{# csrf token reused by exam-grade.js for every row #}
+<form style="display: none">{{ grade_form.csrf_token }}</form>
+
+<table class="exam-grade" data-save-url="{{ url_for('networking:exam:grade_save', task=question.slug) }}">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Студент</th>
+            <th>Ответ</th>
+            <th>Баллы</th>
+        </tr>
+    </thead>
+    <tbody>
+        {%- for item in items %}
+        <tr data-user-id="{{ item.attempt.user_id }}">
+            <td>{{ item.attempt.user_id }}</td>
+            <td>{{ item.attempt.user.name }}</td>
+            <td class="answer">
+                <pre><code>{{ item.answer }}</code></pre>
+                {%- if item.teacher_note %}
+                <span class="teacher-note">{{ item.teacher_note }}</span>
+                {%- endif %}
+                {%- if not question.manual %}
+                <span class="auto-result">авто: {% if item.is_correct %}верно{% else %}неверно{% endif %}</span>
+                {%- endif %}
+            </td>
+            <td class="grade-cell">
+                <input type="number" step="0.01" class="grade-input"
+                       value="{{ item.points if item.points is not none else '' }}"
+                       placeholder="{{ item.prefill }}" />
+                <span class="grade-status"></span>
+            </td>
+        </tr>
+        {%- endfor %}
+        {%- if not items %}
+        <tr><td colspan="4">Пока никто не ответил на этот вопрос.</td></tr>
+        {%- endif %}
+    </tbody>
+</table>
+
+<p><a href="{{ url_for('networking:exam:grade_index') }}">← ко всем вопросам</a></p>
+</article>
+
+<script src="{{ url_for('static', path='exam-grade.js') }}?1"></script>
+{% endblock %}

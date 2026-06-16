@@ -8,6 +8,7 @@
 {% if user.is_admin %}
 <p>
     <a href="{{ url_for("networking:scoreboard") }}">Результаты курса</a><br/>
+    <a href="{{ url_for("networking:exam:grade_index") }}">Проверка экзамена</a><br/>
     <a href="{{ url_for("auth:admin:impersonate") }}">Смена пользователя</a>
 </p>
 {% endif %}
@@ -72,12 +73,13 @@
     Письменный тест будет проведён онлайн 16 июня в 12:00.
 </p>
 
-{# <p>
-    {% if user.exam is not none %}
-    Вы набрали {{ user.exam.test_points }} балл{{ user.exam.test_points|ending("", "а", "ов") }}.
-    {% endif %}
-    <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTFmKOm207mmbeN8a5FpRBbS9Fukc01EqOuqbtPHFw-9ldT6hOoW_zyb9DUV5MNG0PSWfsyCCaH4T2_/pubhtml">Все результаты теста</a>
-</p> #}
+{% if exam_started %}
+<p><a href="{{ url_for("networking:exam:page") }}">Открыть письменный тест</a></p>
+{% endif %}
+
+{% if exam_points is not none %}
+<p>За письменный тест вы набрали {{ exam_points }} балл{{ exam_points|ending("", "а", "ов") }}.</p>
+{% endif %}
 
 <p>
     Каждый вопрос теста подразумевает готовый ответ либо решение небольшой практической задачи.

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% set title = exam.name %}
+{% set breadcrumbs = true %}
+{% set ace_modes = ["sh"] %}
+{% block main %}
+<article>
+<h1>{{ exam.name }}</h1>
+
+<p class="meta">
+    <span>Начало: {{ exam.start|moscowtime }} МСК</span>
+    <span>Окончание: {{ exam.end|moscowtime }} МСК</span>
+</p>
+
+{% if ended %}
+<p><mark>Экзамен завершён.</mark> Приём ответов закрыт. Ниже — ваши сохранённые ответы.</p>
+{% elif not submittable %}
+<p><mark>Экзамен ещё не начался.</mark> Эта страница видна вам как администратору; студенты увидят её после старта.</p>
+{% else %}
+<p>
+    Отвечайте на каждый вопрос отдельно. Вы можете изменить и переотправить любой ответ до окончания
+    экзамена. Проверяется только последний отправленный ответ.
+</p>
+<p>
+    Можно пользоваться любыми источниками информации. Запрещается общаться с другими людьми и пользоваться
+    искусственным интеллектом, в том числе большими языковыми моделями.
+</p>
+{% endif %}
+
+{% for item in items %}
+{% set q = item.question %}
+<section id="{{ q.slug }}">
+    <h3>{{ loop.index }}. {{ q.label }}{% if q.points %} <span class="meta">— {% if results_visible %}{{ item.score }} / {{ q.points }} баллов{% else %}{{ q.points }} балл{{ q.points|ending('', 'а', 'ов') }}{% endif %}</span>{% endif %}</h3>
+    <div class="question-prompt">{{ item.prompt|safe }}</div>
+
+    {% if submittable %}
+    {{ render_form(item.form) }}
+    {% if item.answered %}
+    <p class="meta">Ответ сохранён. Вы можете изменить и переотправить его.</p>
+    {% endif %}
+    {% else %}
+    {% if item.answered %}
+    <p class="meta">Ваш ответ:</p>
+    <pre><code>{{ item.answer }}</code></pre>
+    {% else %}
+    <p class="meta">Ответ не был дан.</p>
+    {% endif %}
+    {% endif %}
+</section>
+{% endfor %}
+</article>
+{% endblock %}

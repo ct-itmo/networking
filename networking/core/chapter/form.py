@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Any, Protocol
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +20,10 @@ from networking.core.model import Attempt
 class ParsedAttempt:
     task: str
     is_correct: bool
+    # Optional pre-computed score. Used for auto-scored questions that award partial
+    # credit (e.g. a multi-field grid where each sub-answer is checked independently).
+    # When None, the score is derived later from `is_correct` / the task's max points.
+    points: Decimal | None = None
 
 
 class BaseTaskForm(QuirckForm):

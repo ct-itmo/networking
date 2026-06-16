@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% set title = "Проверка экзамена" %}
+{% set breadcrumbs = true %}
+{% block main %}
+<article>
+<h1>Проверка экзамена — {{ exam.name }}</h1>
+
+<table class="scoreboard">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Вопрос</th>
+            <th>Тип</th>
+            <th>Ответов</th>
+            <th>Проверено</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {%- for row in rows %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ row.question.label }}</td>
+            <td>{% if row.question.manual %}ручная{% else %}авто{% endif %}</td>
+            <td>{{ row.answered }}</td>
+            <td>{{ row.graded }} / {{ row.answered }}</td>
+            <td><a href="{{ url_for('networking:exam:grade_task', task=row.question.slug) }}">Проверять →</a></td>
+        </tr>
+        {%- endfor %}
+    </tbody>
+</table>
+</article>
+{% endblock %}

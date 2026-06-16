@@ -1,5 +1,6 @@
 import itertools
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from decimal import Decimal
 from hashlib import sha256
 
@@ -18,6 +19,7 @@ from quirck.core import s3
 from quirck.web.template import TemplateResponse
 
 from networking.chapters import chapters
+from networking.chapters.exam import exam_chapter
 from networking.core.chapter.base import ChapterResult
 from networking.core.middleware import LoadMetaMiddleware
 from networking.core.model import Attempt, Exam
@@ -54,11 +56,18 @@ async def main_page(request: Request) -> Response:
         (chapter.total_score for chapter in user_chapters), Decimal(0)
     )
 
-    overall_score = (
-        overall_chapter_score
-        if exam is None
-        else exam.calculate_points(overall_chapter_score)
+    exam_points = (
+        exam_chapter.calculate_test_points(attempts)
+        if exam_chapter.results_visible
+        else None
     )
+
+    if exam is not None:
+        overall_score = exam.calculate_points(overall_chapter_score, exam_points)
+    elif exam_points is not None:
+        overall_score = min(exam_points + overall_chapter_score, Decimal(83))
+    else:
+        overall_score = overall_chapter_score
 
     return TemplateResponse(
         request,
@@ -68,6 +77,9 @@ async def main_page(request: Request) -> Response:
             "overall_chapter_score": overall_chapter_score,
             "total_chapter_score": total_chapter_score,
             "overall_score": overall_score,
+            "exam": exam_chapter,
+            "exam_started": datetime.now(timezone.utc) >= exam_chapter.start,
+            "exam_points": exam_points,
         },
     )
 
@@ -76,6 +88,7 @@ async def main_page(request: Request) -> Response:
 class UserScore:
     user: User
     chapters: list[ChapterResult]
+    exam_points: Decimal = field(default=Decimal(0))
 
     @property
     def score(self) -> Decimal:
@@ -144,6 +157,9 @@ async def scoreboard(request: Request) -> Response:
                 )
                 for chapter in chapters
             ],
+            exam_chapter.calculate_test_points(
+                grouped_attempts.get(user.id, {}).get(exam_chapter.slug, [])
+            ),
         )
         for user in users
     ]
@@ -190,6 +206,7 @@ def get_user_mount():
                 ],
                 name="vpn",
             ),
+            exam_chapter.get_mount(),
         ]
         + [chapter.get_mount() for chapter in chapters],
         middleware=[

@@ -99,13 +99,16 @@ class Exam(Base):
 
     user: Mapped[User] = relationship("User", back_populates="exam")
 
-    def calculate_points(self, chapter_points: Decimal) -> Decimal:
+    def calculate_points(
+        self, chapter_points: Decimal, test_points: Decimal | None = None
+    ) -> Decimal:
         if self.final_points is not None:
             return self.final_points
+        test_points = self.test_points if test_points is None else test_points
         if self.has_debt:
-            return min((self.test_points or 0) + chapter_points, Decimal(74))
+            return min((test_points or 0) + chapter_points, Decimal(74))
         else:
-            return min((self.test_points or 0) + chapter_points, Decimal(83))
+            return min((test_points or 0) + chapter_points, Decimal(83))
 
 
 User.attempts = relationship("Attempt", back_populates="user")

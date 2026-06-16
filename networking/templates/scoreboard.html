@@ -31,8 +31,8 @@
         <tr {%- if user.exam is not none and user.exam.has_debt %} style="background-color: #fd7c6e;" title="Была задолженность"{% endif %}>
             <td>{{ user.id }}</td>
             <td>{{ user.name }}</td>
-            <td>{% if user.exam is none %}{{ user_meta.score }}{% else %}{{ user.exam.calculate_points(user_meta.score) }}{% endif %}</td>
-            <td>{% if user.exam is not none %}{{ user.exam.test_points }}{% endif %}</td>
+            <td>{% if user.exam is none %}{{ user_meta.score }}{% else %}{{ user.exam.calculate_points(user_meta.score, user_meta.exam_points) }}{% endif %}</td>
+            <td>{{ user_meta.exam_points or "" }}</td>
             <td>{% if user.exam is not none %}{{ user.exam.final_points or "" }}{% endif %}</td>
             {%- for chapter in user_meta.chapters %}
             {%- for result in chapter.results %}
